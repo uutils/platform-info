@@ -1,0 +1,8 @@
+[package]
+name = "platform-info"
+version = "0.1.0"
+authors = ["Alex Lyon <arcterus@mail.com>"]
+
+[dependencies]
+libc = "0.2"
+winapi = { version = "0.3", features = ["sysinfoapi"] }
