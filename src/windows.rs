@@ -373,7 +373,10 @@ fn test_machine() {
         vec!["unknown"]
     };
 
-    assert!(target.contains(&&*PlatformInfo::new().unwrap().machine()));
+    let info = PlatformInfo::new().unwrap();
+
+    println!("{}", info.machine());
+    assert!(target.contains(&&*info.machine()));
 }
 
 // TODO: figure out a way to test these
