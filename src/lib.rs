@@ -1,22 +1,29 @@
 // This file is part of the uutils coreutils package.
 //
-// (c) Jian Zeng <anonymousknight96 AT gmail.com>
 // (c) Alex Lyon <arcterus@mail.com>
 //
 // For the full copyright and license information, please view the LICENSE file
 // that was distributed with this source code.
 //
 
-pub use platform::*;
+pub use self::sys::*;
 
-mod platform;
+use std::borrow::Cow;
 
-//pub trait Uname 
+#[cfg(unix)]
+#[path = "unix.rs"]
+mod sys;
+#[cfg(windows)]
+#[path = "windows.rs"]
+mod sys;
+#[cfg(target_os = "redox")]
+#[path = "redox.rs"]
+mod sys;
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+pub trait Uname {
+    fn sysname(&self) -> Cow<str>;
+    fn nodename(&self) -> Cow<str>;
+    fn release(&self) -> Cow<str>;
+    fn version(&self) -> Cow<str>;
+    fn machine(&self) -> Cow<str>;
 }

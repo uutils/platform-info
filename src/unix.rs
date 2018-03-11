@@ -10,6 +10,7 @@
 extern crate libc;
 
 use self::libc::{uname, utsname};
+use super::Uname;
 use std::mem;
 use std::ffi::CStr;
 use std::borrow::Cow;
@@ -21,39 +22,41 @@ macro_rules! cstr2cow {
     )
 }
 
-pub struct Uname {
+pub struct PlatformInfo {
     inner: utsname,
 }
 
-impl Uname {
+impl PlatformInfo {
     pub fn new() -> io::Result<Self> {
         unsafe {
             let mut uts: utsname = mem::uninitialized();
             if uname(&mut uts) == 0 {
-                Ok(Uname { inner: uts })
+                Ok(Self { inner: uts })
             } else {
                 Err(io::Error::last_os_error())
             }
         }
     }
+}
 
-    pub fn sysname(&self) -> Cow<str> {
+impl Uname for PlatformInfo {
+    fn sysname(&self) -> Cow<str> {
         cstr2cow!(self.inner.sysname)
     }
 
-    pub fn nodename(&self) -> Cow<str> {
+    fn nodename(&self) -> Cow<str> {
         cstr2cow!(self.inner.nodename)
     }
 
-    pub fn release(&self) -> Cow<str> {
+    fn release(&self) -> Cow<str> {
         cstr2cow!(self.inner.release)
     }
 
-    pub fn version(&self) -> Cow<str> {
+    fn version(&self) -> Cow<str> {
         cstr2cow!(self.inner.version)
     }
 
-    pub fn machine(&self) -> Cow<str> {
+    fn machine(&self) -> Cow<str> {
         cstr2cow!(self.inner.machine)
     }
 }
