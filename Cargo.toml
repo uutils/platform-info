@@ -5,4 +5,4 @@ authors = ["Alex Lyon <arcterus@mail.com>"]
 
 [dependencies]
 libc = "0.2"
-winapi = { version = "0.3", features = ["libloaderapi", "sysinfoapi", "winbase", "winver"] }
+winapi = { version = "0.3", features = ["libloaderapi", "processthreadsapi", "sysinfoapi", "winbase", "winver"] }

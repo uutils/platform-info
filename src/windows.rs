@@ -347,6 +347,35 @@ impl Uname for PlatformInfo {
     }
 }
 
+#[cfg(test)]
+fn is_wow64() -> bool {
+    use self::winapi::um::processthreadsapi::*;
+
+    let mut result = FALSE;
+
+    let dll_wide: Vec<WCHAR> = OsStr::new("Kernel32.dll")
+        .encode_wide()
+        .chain(iter::once(0))
+        .collect();
+    unsafe {
+        let module = GetModuleHandleW(dll_wide.as_ptr());
+        if !module.is_null() {
+            let funcname = CStr::from_bytes_with_nul_unchecked(b"IsWow64Process\0");
+            let func = GetProcAddress(module, funcname.as_ptr());
+            if !func.is_null() {
+                let func: extern "stdcall" fn(HANDLE, *mut BOOL) -> BOOL =
+                    mem::transmute(func as *const ());
+
+                // we don't bother checking for errors as we assume that means that we are not using
+                // WoW64
+                func(GetCurrentProcess(), &mut result);
+            }
+        }
+    }
+
+    result == TRUE
+}
+
 #[test]
 fn test_sysname() {
     assert_eq!(PlatformInfo::new().unwrap().sysname(), "WindowsNT");
@@ -354,7 +383,7 @@ fn test_sysname() {
 
 #[test]
 fn test_machine() {
-    let target = if cfg!(target_arch = "x86_64") {
+    let target = if cfg!(target_arch = "x86_64") || (cfg!(target_arch = "x86") && is_wow64()) {
         vec!["x86_64"]
     } else if cfg!(target_arch = "x86") {
         vec!["i386", "i486", "i586", "i686"]
