@@ -16,7 +16,7 @@ pub struct PlatformInfo {
     nodename: String,
     kernel_release: String,
     kernel_version: String,
-    machine: String
+    machine: String,
 }
 
 impl PlatformInfo {
@@ -38,7 +38,7 @@ impl PlatformInfo {
             nodename: nodename.to_owned(),
             kernel_release: kernel_release.to_owned(),
             kernel_version: kernel_version.to_owned(),
-            machine: machine.to_owned()
+            machine: machine.to_owned(),
         })
     }
 }

@@ -58,7 +58,7 @@ impl PlatformInfo {
             let mut sysinfo = mem::uninitialized();
 
             GetNativeSystemInfo(&mut sysinfo);
-            
+
             let (version, release) = Self::version_info()?;
             let nodename = Self::computer_name()?;
 
@@ -66,7 +66,7 @@ impl PlatformInfo {
                 sysinfo: sysinfo,
                 nodename: nodename,
                 version: version,
-                release: release
+                release: release,
             })
         }
     }
@@ -96,20 +96,33 @@ impl PlatformInfo {
     // NOTE: the only reason any of this has to be done is Microsoft deprecated GetVersionEx() and
     //       it is now basically useless for us on Windows 8.1 and Windows 10
     unsafe fn version_info() -> io::Result<(String, String)> {
-        let dll_wide: Vec<WCHAR> = OsStr::new("ntdll.dll").encode_wide().chain(iter::once(0)).collect();
+        let dll_wide: Vec<WCHAR> = OsStr::new("ntdll.dll")
+            .encode_wide()
+            .chain(iter::once(0))
+            .collect();
         let module = GetModuleHandleW(dll_wide.as_ptr());
         if !module.is_null() {
             let funcname = CStr::from_bytes_with_nul_unchecked(b"RtlGetVersion\0");
             let func = GetProcAddress(module, funcname.as_ptr());
             if !func.is_null() {
-                let func: extern "stdcall" fn(*mut RTL_OSVERSIONINFOEXW) -> NTSTATUS = mem::transmute(func as *const ());
+                let func: extern "stdcall" fn(*mut RTL_OSVERSIONINFOEXW)
+                    -> NTSTATUS = mem::transmute(func as *const ());
 
                 let mut osinfo: RTL_OSVERSIONINFOEXW = mem::zeroed();
                 osinfo.dwOSVersionInfoSize = mem::size_of::<RTL_OSVERSIONINFOEXW>() as _;
 
                 if func(&mut osinfo) == STATUS_SUCCESS {
-                    let version = String::from_utf16_lossy(&osinfo.szCSDVersion.split(|&v| v == 0).next().unwrap());
-                    let release = Self::determine_release(osinfo.dwMajorVersion, osinfo.dwMinorVersion, osinfo.wProductType, osinfo.wSuiteMask);
+                    let version = String::from_utf16_lossy(&osinfo
+                        .szCSDVersion
+                        .split(|&v| v == 0)
+                        .next()
+                        .unwrap());
+                    let release = Self::determine_release(
+                        osinfo.dwMajorVersion,
+                        osinfo.dwMinorVersion,
+                        osinfo.wProductType,
+                        osinfo.wSuiteMask,
+                    );
 
                     return Ok((version, release));
                 }
@@ -141,13 +154,17 @@ impl PlatformInfo {
         };
 
         let mask = unsafe { sysinfoapi::VerSetConditionMask(0, VER_PRODUCT_TYPE, VER_EQUAL) };
-        let product_type = if unsafe { VerifyVersionInfoW(&mut info, VER_PRODUCT_TYPE, mask) } != 0 {
+        let product_type = if unsafe { VerifyVersionInfoW(&mut info, VER_PRODUCT_TYPE, mask) } != 0
+        {
             VER_NT_WORKSTATION
         } else {
             0
         };
 
-        Ok((String::new(), Self::determine_release(major, minor, product_type, suite_mask)))
+        Ok((
+            String::new(),
+            Self::determine_release(major, minor, product_type, suite_mask),
+        ))
     }
 
     fn get_kernel32_path() -> io::Result<PathBuf> {
@@ -173,7 +190,10 @@ impl PlatformInfo {
     }
 
     fn get_file_version_info(path: PathBuf) -> io::Result<Vec<u8>> {
-        let path_wide: Vec<_> = path.as_os_str().encode_wide().chain(iter::once(0)).collect();
+        let path_wide: Vec<_> = path.as_os_str()
+            .encode_wide()
+            .chain(iter::once(0))
+            .collect();
         let fver_size = unsafe { GetFileVersionInfoSizeW(path_wide.as_ptr(), ptr::null_mut()) };
 
         if fver_size == 0 {
@@ -181,7 +201,15 @@ impl PlatformInfo {
         }
 
         let mut buffer = Vec::with_capacity(fver_size as usize);
-        if unsafe { GetFileVersionInfoW(path_wide.as_ptr(), 0, fver_size, buffer.as_mut_ptr() as *mut _) } == 0 {
+        if unsafe {
+            GetFileVersionInfoW(
+                path_wide.as_ptr(),
+                0,
+                fver_size,
+                buffer.as_mut_ptr() as *mut _,
+            )
+        } == 0
+        {
             Err(io::Error::last_os_error())
         } else {
             unsafe {
@@ -195,19 +223,37 @@ impl PlatformInfo {
         let mut block_size = 0;
         let mut block = unsafe { mem::uninitialized() };
 
-        let sub_block: Vec<_> = OsStr::new("\\").encode_wide().chain(iter::once(0)).collect();
-        if unsafe { VerQueryValueW(buffer.as_ptr() as *const _, sub_block.as_ptr(), &mut block, &mut block_size) == 0 } {
+        let sub_block: Vec<_> = OsStr::new("\\")
+            .encode_wide()
+            .chain(iter::once(0))
+            .collect();
+        if unsafe {
+            VerQueryValueW(
+                buffer.as_ptr() as *const _,
+                sub_block.as_ptr(),
+                &mut block,
+                &mut block_size,
+            ) == 0
+        } {
             if block_size < mem::size_of::<VS_FIXEDFILEINFO>() as UINT {
-                return Err(io::Error::last_os_error())
+                return Err(io::Error::last_os_error());
             }
         }
 
         let info = unsafe { &*(block as *const VS_FIXEDFILEINFO) };
 
-        Ok((HIWORD(info.dwProductVersionMS) as _, LOWORD(info.dwProductVersionMS) as _))
+        Ok((
+            HIWORD(info.dwProductVersionMS) as _,
+            LOWORD(info.dwProductVersionMS) as _,
+        ))
     }
 
-    fn determine_release(major: ULONG, minor: ULONG, product_type: UCHAR, suite_mask: USHORT) -> String {
+    fn determine_release(
+        major: ULONG,
+        minor: ULONG,
+        product_type: UCHAR,
+        suite_mask: USHORT,
+    ) -> String {
         let mut name = match major {
             5 => match minor {
                 0 => "Windows 2000",
@@ -215,8 +261,8 @@ impl PlatformInfo {
                 2 if product_type == VER_NT_WORKSTATION => "Windows XP Professional x64 Edition",
                 2 if suite_mask as UINT == VER_SUITE_WH_SERVER => "Windows Home Server",
                 2 => "Windows Server 2003",
-                _ => ""
-            }
+                _ => "",
+            },
             6 => match minor {
                 0 if product_type == VER_NT_WORKSTATION => "Windows Vista",
                 0 => "Windows Server 2008",
@@ -226,13 +272,13 @@ impl PlatformInfo {
                 2 => "Windows 8",
                 3 if product_type != VER_NT_WORKSTATION => "Windows Server 2012 R2",
                 3 => "Windows 8.1",
-                _ => ""
-            }
+                _ => "",
+            },
             10 => match minor {
                 0 if product_type != VER_NT_WORKSTATION => "Windows Server 2016",
-                _ => ""
-            }
-            _ => ""
+                _ => "",
+            },
+            _ => "",
         };
 
         // we're doing this down here so we don't have to copy this into multiple branches
@@ -276,14 +322,12 @@ impl Uname for PlatformInfo {
 
         let arch_str = match arch {
             PROCESSOR_ARCHITECTURE_AMD64 => "x86_64",
-            PROCESSOR_ARCHITECTURE_INTEL => {
-                match self.sysinfo.wProcessorLevel {
-                    4 => "i486",
-                    5 => "i586",
-                    6 => "i686",
-                    _ => "i386"
-                }
-            }
+            PROCESSOR_ARCHITECTURE_INTEL => match self.sysinfo.wProcessorLevel {
+                4 => "i486",
+                5 => "i586",
+                6 => "i686",
+                _ => "i386",
+            },
             PROCESSOR_ARCHITECTURE_IA64 => "ia64",
             // FIXME: not sure if this is wrong because I think uname usually returns stuff like
             //        armv7l on Linux, but can't find a way to figure that out on Windows
@@ -296,7 +340,7 @@ impl Uname for PlatformInfo {
             PROCESSOR_ARCHITECTURE_ALPHA | PROCESSOR_ARCHITECTURE_ALPHA64 => "alpha",
             // FIXME: I don't know anything about this architecture, so this may be incorrect
             PROCESSOR_ARCHITECTURE_SHX => "sh",
-            _ => "unknown"
+            _ => "unknown",
         };
 
         Cow::from(arch_str)
