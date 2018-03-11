@@ -101,7 +101,7 @@ matrix:
 before_install:
   - set -e
   - rustup self update
-  - if [ $REDOX ]; then ./.travis/redox-toolchain.sh; fi
+  - if [ $REDOX ]; then bash .travis/redox-toolchain.sh; fi
 
 install:
   - sh ci/install.sh
