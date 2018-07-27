@@ -1,7 +1,19 @@
 [package]
 name = "platform-info"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Alex Lyon <arcterus@mail.com>"]
+description = "A simple cross-platform interface to get info about a system"
+
+homepage = "https://github.com/uutils/platform-info"
+repository = "https://github.com/uutils/platform-info"
+readme = "README.md"
+keywords = ["platform", "info", "system"]
+categories = ["os"]
+license = "MIT"
+
+[badges]
+travis-ci = { repository = "uutils/platform-info" }
+appveyor = { repository = "uutils/platform-info" }
 
 [dependencies]
 libc = "0.2"
