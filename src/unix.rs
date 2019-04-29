@@ -22,11 +22,14 @@ macro_rules! cstr2cow {
     )
 }
 
+/// `PlatformInfo` handles retrieiving information for the current platform (a Unix-like operating
+/// in this case).
 pub struct PlatformInfo {
     inner: utsname,
 }
 
 impl PlatformInfo {
+    /// Creates a new instance of `PlatformInfo`.  This function *should* never fail.
     pub fn new() -> io::Result<Self> {
         unsafe {
             let mut uts: utsname = mem::uninitialized();

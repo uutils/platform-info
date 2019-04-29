@@ -11,6 +11,7 @@ use std::borrow::Cow;
 use std::io::{self, Read};
 use std::fs::File;
 
+/// `PlatformInfo` handles retrieiving information for the current platform (Redox in this case).
 pub struct PlatformInfo {
     kernel_name: String,
     nodename: String,
@@ -20,8 +21,10 @@ pub struct PlatformInfo {
 }
 
 impl PlatformInfo {
+    /// Creates a new instance of `PlatformInfo`.  This function will fail if `sys:uname` is
+    /// inaccessible for whatever reason.
     pub fn new() -> io::Result<Self> {
-        let mut inner = Box::new(String::new());
+        let mut inner = String::new();
         File::open("sys:uname")?.read_to_string(&mut inner)?;
 
         let mut lines = inner.lines();

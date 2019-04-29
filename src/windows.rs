@@ -45,6 +45,7 @@ struct VS_FIXEDFILEINFO {
     dwFileDateLS: DWORD,
 }
 
+/// `PlatformInfo` handles retrieiving information for the current platform (Windows in this case).
 pub struct PlatformInfo {
     sysinfo: SYSTEM_INFO,
     nodename: String,
@@ -53,6 +54,8 @@ pub struct PlatformInfo {
 }
 
 impl PlatformInfo {
+    /// Creates a new instance of `PlatformInfo`.  Because of the way the information is retrieved,
+    /// it is possible for this function to fail.
     pub fn new() -> io::Result<Self> {
         unsafe {
             let mut sysinfo = mem::uninitialized();
