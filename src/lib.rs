@@ -16,9 +16,6 @@ mod sys;
 #[cfg(windows)]
 #[path = "windows.rs"]
 mod sys;
-#[cfg(target_os = "redox")]
-#[path = "redox.rs"]
-mod sys;
 
 pub trait Uname {
     fn sysname(&self) -> Cow<str>;
