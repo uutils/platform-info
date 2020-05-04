@@ -8,20 +8,20 @@
 
 extern crate winapi;
 
+use self::winapi::shared::minwindef::*;
+use self::winapi::shared::ntdef::NTSTATUS;
+use self::winapi::shared::ntstatus::*;
 use self::winapi::um::libloaderapi::*;
 use self::winapi::um::sysinfoapi::*;
 use self::winapi::um::winbase::*;
 use self::winapi::um::winnt::*;
 use self::winapi::um::winver::*;
-use self::winapi::shared::ntstatus::*;
-use self::winapi::shared::ntdef::NTSTATUS;
-use self::winapi::shared::minwindef::*;
 use super::Uname;
-use std::ffi::{CStr, OsStr, OsString};
-use std::mem;
 use std::borrow::Cow;
+use std::ffi::{CStr, OsStr, OsString};
 use std::io;
 use std::iter;
+use std::mem;
 use std::os::windows::ffi::{OsStrExt, OsStringExt};
 use std::path::PathBuf;
 use std::ptr;
@@ -105,18 +105,16 @@ impl PlatformInfo {
             let funcname = CStr::from_bytes_with_nul_unchecked(b"RtlGetVersion\0");
             let func = GetProcAddress(module, funcname.as_ptr());
             if !func.is_null() {
-                let func: extern "stdcall" fn(*mut RTL_OSVERSIONINFOEXW)
-                    -> NTSTATUS = mem::transmute(func as *const ());
+                let func: extern "stdcall" fn(*mut RTL_OSVERSIONINFOEXW) -> NTSTATUS =
+                    mem::transmute(func as *const ());
 
                 let mut osinfo: RTL_OSVERSIONINFOEXW = mem::zeroed();
                 osinfo.dwOSVersionInfoSize = mem::size_of::<RTL_OSVERSIONINFOEXW>() as _;
 
                 if func(&mut osinfo) == STATUS_SUCCESS {
-                    let version = String::from_utf16_lossy(&osinfo
-                        .szCSDVersion
-                        .split(|&v| v == 0)
-                        .next()
-                        .unwrap());
+                    let version = String::from_utf16_lossy(
+                        &osinfo.szCSDVersion.split(|&v| v == 0).next().unwrap(),
+                    );
                     let release = Self::determine_release(
                         osinfo.dwMajorVersion,
                         osinfo.dwMinorVersion,
@@ -190,7 +188,8 @@ impl PlatformInfo {
     }
 
     fn get_file_version_info(path: PathBuf) -> io::Result<Vec<u8>> {
-        let path_wide: Vec<_> = path.as_os_str()
+        let path_wide: Vec<_> = path
+            .as_os_str()
             .encode_wide()
             .chain(iter::once(0))
             .collect();

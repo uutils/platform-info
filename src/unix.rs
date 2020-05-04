@@ -11,15 +11,15 @@ extern crate libc;
 
 use self::libc::{uname, utsname};
 use super::Uname;
-use std::mem;
-use std::ffi::CStr;
 use std::borrow::Cow;
+use std::ffi::CStr;
 use std::io;
+use std::mem;
 
 macro_rules! cstr2cow {
-    ($v:expr) => (
+    ($v:expr) => {
         unsafe { CStr::from_ptr($v.as_ref().as_ptr()).to_string_lossy() }
-    )
+    };
 }
 
 pub struct PlatformInfo {
@@ -29,7 +29,7 @@ pub struct PlatformInfo {
 impl PlatformInfo {
     pub fn new() -> io::Result<Self> {
         unsafe {
-            let mut uts: utsname = mem::uninitialized();
+            let mut uts: utsname = mem::MaybeUninit;
             if uname(&mut uts) == 0 {
                 Ok(Self { inner: uts })
             } else {
