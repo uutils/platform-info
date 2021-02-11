@@ -38,3 +38,14 @@ impl Uname for PlatformInfo {
         Cow::Borrowed("unknown")
     }
 }
+
+#[test]
+fn test_unknown() {
+    let platform_info = PlatformInfo::new().unwrap();
+
+    assert_eq!(platform_info.sysname(), "unknown");
+    assert_eq!(platform_info.nodename(), "unknown");
+    assert_eq!(platform_info.release(), "unknown");
+    assert_eq!(platform_info.version(), "unknown");
+    assert_eq!(platform_info.machine(), "unknown");
+}
