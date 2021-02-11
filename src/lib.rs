@@ -16,6 +16,9 @@ mod sys;
 #[cfg(windows)]
 #[path = "windows.rs"]
 mod sys;
+#[cfg(not(any(unix, windows)))]
+#[path = "unknown.rs"]
+mod sys;
 
 pub trait Uname {
     fn sysname(&self) -> Cow<str>;
