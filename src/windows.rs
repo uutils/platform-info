@@ -239,10 +239,9 @@ impl PlatformInfo {
                 &mut block,
                 &mut block_size,
             ) == 0
+                && block_size < mem::size_of::<VS_FIXEDFILEINFO>() as UINT
         } {
-            if block_size < mem::size_of::<VS_FIXEDFILEINFO>() as UINT {
-                return Err(io::Error::last_os_error());
-            }
+            return Err(io::Error::last_os_error());
         }
 
         let info = unsafe { &*(block as *const VS_FIXEDFILEINFO) };
