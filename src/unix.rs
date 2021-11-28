@@ -33,7 +33,7 @@ impl PlatformInfo {
     pub fn new() -> io::Result<Self> {
         unsafe {
             let mut uts: utsname = mem::uninitialized();
-            if uname(&mut uts) == 0 {
+            if uname(&mut uts) != -1 {
                 Ok(Self { inner: uts })
             } else {
                 Err(io::Error::last_os_error())
