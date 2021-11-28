@@ -2,6 +2,7 @@
 name = "platform-info"
 version = "0.2.0"
 authors = ["Alex Lyon <arcterus@mail.com>"]
+edition = "2018"
 description = "A simple cross-platform interface to get info about a system"
 
 homepage = "https://github.com/uutils/platform-info"
