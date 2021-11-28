@@ -22,7 +22,7 @@ macro_rules! cstr2cow {
     };
 }
 
-/// `PlatformInfo` handles retrieiving information for the current platform (a Unix-like operating
+/// `PlatformInfo` handles retrieving information for the current platform (a Unix-like operating
 /// in this case).
 pub struct PlatformInfo {
     inner: utsname,
@@ -31,10 +31,12 @@ pub struct PlatformInfo {
 impl PlatformInfo {
     /// Creates a new instance of `PlatformInfo`.  This function *should* never fail.
     pub fn new() -> io::Result<Self> {
+        let uts = mem::MaybeUninit::<utsname>::uninit();
         unsafe {
-            let mut uts: utsname = mem::uninitialized();
-            if uname(&mut uts) != -1 {
-                Ok(Self { inner: uts })
+            if uname(&mut uts.assume_init()) != -1 {
+                Ok(Self {
+                    inner: uts.assume_init(),
+                })
             } else {
                 Err(io::Error::last_os_error())
             }
