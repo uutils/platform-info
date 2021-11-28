@@ -31,10 +31,12 @@ pub struct PlatformInfo {
 impl PlatformInfo {
     /// Creates a new instance of `PlatformInfo`.  This function *should* never fail.
     pub fn new() -> io::Result<Self> {
+        let uts = mem::MaybeUninit::<utsname>::uninit();
         unsafe {
-            let mut uts: utsname = mem::uninitialized();
-            if uname(&mut uts) == 0 {
-                Ok(Self { inner: uts })
+            if uname(&mut uts.assume_init()) == 0 {
+                Ok(Self {
+                    inner: uts.assume_init(),
+                })
             } else {
                 Err(io::Error::last_os_error())
             }
