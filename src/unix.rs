@@ -22,7 +22,7 @@ macro_rules! cstr2cow {
     };
 }
 
-/// `PlatformInfo` handles retrieiving information for the current platform (a Unix-like operating
+/// `PlatformInfo` handles retrieving information for the current platform (a Unix-like operating
 /// in this case).
 pub struct PlatformInfo {
     inner: utsname,

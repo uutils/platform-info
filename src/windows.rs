@@ -45,7 +45,7 @@ struct VS_FIXEDFILEINFO {
     dwFileDateLS: DWORD,
 }
 
-/// `PlatformInfo` handles retrieiving information for the current platform (Windows in this case).
+/// `PlatformInfo` handles retrieving information for the current platform (Windows in this case).
 pub struct PlatformInfo {
     sysinfo: SYSTEM_INFO,
     nodename: String,
