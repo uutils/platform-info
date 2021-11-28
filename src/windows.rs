@@ -117,7 +117,7 @@ impl PlatformInfo {
 
                 if func(&mut osinfo) == STATUS_SUCCESS {
                     let version = String::from_utf16_lossy(
-                        &osinfo.szCSDVersion.split(|&v| v == 0).next().unwrap(),
+                        osinfo.szCSDVersion.split(|&v| v == 0).next().unwrap(),
                     );
                     let release = Self::determine_release(
                         osinfo.dwMajorVersion,
