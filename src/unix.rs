@@ -33,7 +33,7 @@ impl PlatformInfo {
     pub fn new() -> io::Result<Self> {
         let uts = mem::MaybeUninit::<utsname>::uninit();
         unsafe {
-            if uname(&mut uts.assume_init()) == 0 {
+            if uname(&mut uts.assume_init()) != -1 {
                 Ok(Self {
                     inner: uts.assume_init(),
                 })
