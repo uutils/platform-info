@@ -9,6 +9,31 @@ platform-info
 A simple cross-platform way to get information about the currently running
 system.
 
+Example
+-------
+
+This simple example:
+```
+use platform_info::*;
+
+fn main() {
+    let uname = PlatformInfo::new().unwrap();
+    println!("{}", uname.sysname());
+    println!("{}", uname.nodename());
+    println!("{}", uname.release());
+    println!("{}", uname.version());
+    println!("{}", uname.machine());
+}
+```
+should return something like:
+```
+Linux
+hostname
+5.10.0-8-amd64
+#1 SMP Debian 5.10.46-4 (2021-08-03)
+x86_64
+```
+
 License
 -------
 
