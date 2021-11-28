@@ -286,7 +286,7 @@ impl PlatformInfo {
         };
 
         // we're doing this down here so we don't have to copy this into multiple branches
-        if name.len() == 0 {
+        if name.is_empty() {
             name = if product_type == VER_NT_WORKSTATION {
                 "Windows"
             } else {
