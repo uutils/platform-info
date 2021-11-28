@@ -67,10 +67,10 @@ impl PlatformInfo {
             let nodename = Self::computer_name()?;
 
             Ok(Self {
-                sysinfo: sysinfo,
-                nodename: nodename,
-                version: version,
-                release: release,
+                sysinfo,
+                nodename,
+                version,
+                release,
             })
         }
     }
