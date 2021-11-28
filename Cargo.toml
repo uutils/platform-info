@@ -12,7 +12,6 @@ categories = ["os"]
 license = "MIT"
 
 [badges]
-travis-ci = { repository = "uutils/platform-info" }
 appveyor = { repository = "uutils/platform-info" }
 
 [dependencies]
