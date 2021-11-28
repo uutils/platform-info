@@ -58,6 +58,7 @@ impl PlatformInfo {
     /// it is possible for this function to fail.
     pub fn new() -> io::Result<Self> {
         unsafe {
+            #[allow(deprecated)]
             let mut sysinfo = mem::uninitialized();
 
             GetNativeSystemInfo(&mut sysinfo);
@@ -143,6 +144,7 @@ impl PlatformInfo {
         let file_info = Self::get_file_version_info(pathbuf)?;
         let (major, minor) = Self::query_version_info(file_info)?;
 
+        #[allow(deprecated)]
         let mut info: OSVERSIONINFOEXW = unsafe { mem::uninitialized() };
         info.wSuiteMask = VER_SUITE_WH_SERVER as WORD;
         info.wProductType = VER_NT_WORKSTATION;
@@ -223,6 +225,7 @@ impl PlatformInfo {
 
     fn query_version_info(buffer: Vec<u8>) -> io::Result<(ULONG, ULONG)> {
         let mut block_size = 0;
+        #[allow(deprecated)]
         let mut block = unsafe { mem::uninitialized() };
 
         let sub_block: Vec<_> = OsStr::new("\\")

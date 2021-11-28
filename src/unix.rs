@@ -32,6 +32,7 @@ impl PlatformInfo {
     /// Creates a new instance of `PlatformInfo`.  This function *should* never fail.
     pub fn new() -> io::Result<Self> {
         unsafe {
+            #[allow(deprecated)]
             let mut uts: utsname = mem::uninitialized();
             if uname(&mut uts) != -1 {
                 Ok(Self { inner: uts })
