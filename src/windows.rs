@@ -58,6 +58,7 @@ impl PlatformInfo {
     /// it is possible for this function to fail.
     pub fn new() -> io::Result<Self> {
         unsafe {
+            #[allow(deprecated)]
             let mut sysinfo = mem::uninitialized();
 
             GetNativeSystemInfo(&mut sysinfo);
@@ -66,10 +67,10 @@ impl PlatformInfo {
             let nodename = Self::computer_name()?;
 
             Ok(Self {
-                sysinfo: sysinfo,
-                nodename: nodename,
-                version: version,
-                release: release,
+                sysinfo,
+                nodename,
+                version,
+                release,
             })
         }
     }
@@ -116,7 +117,7 @@ impl PlatformInfo {
 
                 if func(&mut osinfo) == STATUS_SUCCESS {
                     let version = String::from_utf16_lossy(
-                        &osinfo.szCSDVersion.split(|&v| v == 0).next().unwrap(),
+                        osinfo.szCSDVersion.split(|&v| v == 0).next().unwrap(),
                     );
                     let release = Self::determine_release(
                         osinfo.dwMajorVersion,
@@ -143,6 +144,7 @@ impl PlatformInfo {
         let file_info = Self::get_file_version_info(pathbuf)?;
         let (major, minor) = Self::query_version_info(file_info)?;
 
+        #[allow(deprecated)]
         let mut info: OSVERSIONINFOEXW = unsafe { mem::uninitialized() };
         info.wSuiteMask = VER_SUITE_WH_SERVER as WORD;
         info.wProductType = VER_NT_WORKSTATION;
@@ -223,6 +225,7 @@ impl PlatformInfo {
 
     fn query_version_info(buffer: Vec<u8>) -> io::Result<(ULONG, ULONG)> {
         let mut block_size = 0;
+        #[allow(deprecated)]
         let mut block = unsafe { mem::uninitialized() };
 
         let sub_block: Vec<_> = OsStr::new("\\")
@@ -236,10 +239,9 @@ impl PlatformInfo {
                 &mut block,
                 &mut block_size,
             ) == 0
+                && block_size < mem::size_of::<VS_FIXEDFILEINFO>() as UINT
         } {
-            if block_size < mem::size_of::<VS_FIXEDFILEINFO>() as UINT {
-                return Err(io::Error::last_os_error());
-            }
+            return Err(io::Error::last_os_error());
         }
 
         let info = unsafe { &*(block as *const VS_FIXEDFILEINFO) };
@@ -284,7 +286,7 @@ impl PlatformInfo {
         };
 
         // we're doing this down here so we don't have to copy this into multiple branches
-        if name.len() == 0 {
+        if name.is_empty() {
             name = if product_type == VER_NT_WORKSTATION {
                 "Windows"
             } else {

@@ -55,7 +55,10 @@ jobs:
 
   clippy:
     name: cargo clippy -- -D warnings
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -74,13 +77,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
+        os: [ubuntu-latest, macOS-latest, windows-latest]
         toolchain:
           - nightly
         cargo_flags:
           - "--all-features"
     steps:
+      - name: Initialize workflow variables
+        id: vars
+        shell: bash
+        run: |
+          # * CODECOV_FLAGS
+          CODECOV_FLAGS=$( echo "${{ matrix.os }}" | sed 's/[^[:alnum:]]/_/g' )
       - name: Checkout source code
         uses: actions/checkout@v2
 
@@ -110,32 +118,25 @@ jobs:
 
       - name: Generate coverage data
         id: grcov
+        shell: bash
         # uses: actions-rs/grcov@v0.1
         run: |
-          grcov target/debug/ \
-              --branch \
-              --llvm \
-              --source-dir . \
-              --output-path lcov.info \
-              --ignore-not-existing \
-              --excl-line "#\\[derive\\(" \
-              --excl-br-line "#\\[derive\\(" \
-              --excl-start "#\\[cfg\\(test\\)\\]" \
-              --excl-br-start "#\\[cfg\\(test\\)\\]" \
-              --commit-sha ${{ github.sha }} \
-              --service-job-id ${{ github.job }} \
-              --service-name "GitHub Actions" \
-              --service-number ${{ github.run_id }}
-      - name: Upload coverage as artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: lcov.info
-          # path: ${{ steps.grcov.outputs.report }}
-          path: lcov.info
-
-      - name: Upload coverage to codecov.io
+          ## Generate coverage data
+          COVERAGE_REPORT_DIR="target/debug"
+          COVERAGE_REPORT_FILE="${COVERAGE_REPORT_DIR}/lcov.info"
+          mkdir -p "${COVERAGE_REPORT_DIR}"
+          # display coverage files
+          grcov . --output-type files --ignore build.rs --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()" | sort --unique
+          # generate coverage report
+          grcov . --output-type lcov --output-path "${COVERAGE_REPORT_FILE}" --branch --ignore build.rs --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()"
+          echo ::set-output name=report::${COVERAGE_REPORT_FILE}
+      - name: Upload coverage results (to Codecov.io)
         uses: codecov/codecov-action@v1
+        # if: steps.vars.outputs.HAS_CODECOV_TOKEN
         with:
-          # file: ${{ steps.grcov.outputs.report }}
-          file: lcov.info
-          fail_ci_if_error: true
+          # token: ${{ secrets.CODECOV_TOKEN }}
+          file: ${{ steps.coverage.outputs.report }}
+          ## flags: IntegrationTests, UnitTests, ${{ steps.vars.outputs.CODECOV_FLAGS }}
+          flags: ${{ steps.vars.outputs.CODECOV_FLAGS }}
+          name: codecov-umbrella
+          fail_ci_if_error: false
