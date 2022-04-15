@@ -72,71 +72,80 @@ jobs:
           command: clippy
           args: -- -D warnings
 
-  grcov:
-    name: Code coverage
-    runs-on: ${{ matrix.os }}
+  coverage:
+    name: Code Coverage
+    runs-on: ${{ matrix.job.os }}
     strategy:
+      fail-fast: true
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        toolchain:
-          - nightly
-        cargo_flags:
-          - "--all-features"
+        job:
+          - { os: ubuntu-latest  , features: unix }
+          - { os: macos-latest   , features: macos }
+          - { os: windows-latest , features: windows }
     steps:
-      - name: Initialize workflow variables
-        id: vars
-        shell: bash
-        run: |
-          # * CODECOV_FLAGS
-          CODECOV_FLAGS=$( echo "${{ matrix.os }}" | sed 's/[^[:alnum:]]/_/g' )
-      - name: Checkout source code
-        uses: actions/checkout@v2
+    - uses: actions/checkout@v2
+    - name: Initialize workflow variables
+      id: vars
+      shell: bash
+      run: |
+        ## VARs setup
+        outputs() { step_id="vars"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo ::set-output name=${var}::${!var}; done; }
+        # toolchain
+        TOOLCHAIN="nightly" ## default to "nightly" toolchain (required for certain required unstable compiler flags) ## !maint: refactor when stable channel has needed support
+        # * specify gnu-type TOOLCHAIN for windows; `grcov` requires gnu-style code coverage data files
+        case ${{ matrix.job.os }} in windows-*) TOOLCHAIN="$TOOLCHAIN-x86_64-pc-windows-gnu" ;; esac;
+        # * use requested TOOLCHAIN if specified
+        if [ -n "${{ matrix.job.toolchain }}" ]; then TOOLCHAIN="${{ matrix.job.toolchain }}" ; fi
+        outputs TOOLCHAIN
+        # target-specific options
+        # * CARGO_FEATURES_OPTION
+        CARGO_FEATURES_OPTION='--all -- --check' ;  ## default to '--all-features' for code coverage
+        # * CODECOV_FLAGS
+        CODECOV_FLAGS=$( echo "${{ matrix.job.os }}" | sed 's/[^[:alnum:]]/_/g' )
+        outputs CODECOV_FLAGS
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-
-      - name: Install grcov
-        uses: actions-rs/install@v0.1
-        with:
-          crate: grcov
-          version: latest
-          use-tool-cache: true
-
-      - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all --no-fail-fast ${{ matrix.cargo_flags }}
-        env:
-          CARGO_INCREMENTAL: "0"
-          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort -Cdebug-assertions=off'
-          RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort -Cdebug-assertions=off'
-
-      - name: Generate coverage data
-        id: grcov
-        shell: bash
-        # uses: actions-rs/grcov@v0.1
-        run: |
-          ## Generate coverage data
-          COVERAGE_REPORT_DIR="target/debug"
-          COVERAGE_REPORT_FILE="${COVERAGE_REPORT_DIR}/lcov.info"
-          mkdir -p "${COVERAGE_REPORT_DIR}"
-          # display coverage files
-          grcov . --output-type files --ignore build.rs --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()" | sort --unique
-          # generate coverage report
-          grcov . --output-type lcov --output-path "${COVERAGE_REPORT_FILE}" --branch --ignore build.rs --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()"
-          echo ::set-output name=report::${COVERAGE_REPORT_FILE}
-      - name: Upload coverage results (to Codecov.io)
-        uses: codecov/codecov-action@v1
-        # if: steps.vars.outputs.HAS_CODECOV_TOKEN
-        with:
-          # token: ${{ secrets.CODECOV_TOKEN }}
-          file: ${{ steps.coverage.outputs.report }}
-          ## flags: IntegrationTests, UnitTests, ${{ steps.vars.outputs.CODECOV_FLAGS }}
-          flags: ${{ steps.vars.outputs.CODECOV_FLAGS }}
-          name: codecov-umbrella
-          fail_ci_if_error: false
+    - name: rust toolchain ~ install
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ steps.vars.outputs.TOOLCHAIN }}
+        default: true
+        profile: minimal # minimal component installation (ie, no documentation)
+    - name: Test
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --no-fail-fast
+      env:
+        CARGO_INCREMENTAL: "0"
+        RUSTC_WRAPPER: ""
+        RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+        RUSTDOCFLAGS: "-Cpanic=abort"
+    - name: "`grcov` ~ install"
+      uses: actions-rs/install@v0.1
+      with:
+        crate: grcov
+        version: latest
+        use-tool-cache: false
+    - name: Generate coverage data (via `grcov`)
+      id: coverage
+      shell: bash
+      run: |
+        ## Generate coverage data
+        COVERAGE_REPORT_DIR="target/debug"
+        COVERAGE_REPORT_FILE="${COVERAGE_REPORT_DIR}/lcov.info"
+        mkdir -p "${COVERAGE_REPORT_DIR}"
+        # display coverage files
+        grcov . --output-type files --ignore build.rs --ignore "vendor/*" --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()" | sort --unique
+        # generate coverage report
+        grcov . --output-type lcov --output-path "${COVERAGE_REPORT_FILE}" --branch --ignore build.rs --ignore "vendor/*" --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()"
+        echo ::set-output name=report::${COVERAGE_REPORT_FILE}
+    - name: Upload coverage results (to Codecov.io)
+      uses: codecov/codecov-action@v1
+      # if: steps.vars.outputs.HAS_CODECOV_TOKEN
+      with:
+        # token: ${{ secrets.CODECOV_TOKEN }}
+        file: ${{ steps.coverage.outputs.report }}
+        ## flags: IntegrationTests, UnitTests, ${{ steps.vars.outputs.CODECOV_FLAGS }}
+        flags: ${{ steps.vars.outputs.CODECOV_FLAGS }}
+        name: codecov-umbrella
+        fail_ci_if_error: false
