@@ -83,11 +83,9 @@ impl PlatformInfo {
             // XXX: verify that ComputerNameDnsHostname is the best option
             GetComputerNameExW(ComputerNameDnsHostname, ptr::null_mut(), &mut size);
         }
-        let mut data = Vec::with_capacity(size as usize);
-        unsafe {
-            // we subtract one from the size because the returned size includes the null terminator
-            data.set_len(size as usize - 1);
 
+        let mut data: Vec<u16> = vec![0; size as usize];
+        unsafe {
             if GetComputerNameExW(ComputerNameDnsHostname, data.as_mut_ptr(), &mut size) != 0 {
                 Ok(String::from_utf16_lossy(&data))
             } else {
