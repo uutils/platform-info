@@ -9,7 +9,7 @@
 /*!
 This crate provides the ability to retrieve various information specific to your current platform
 without having to use platform-specific methods to so.  Currently, only information pertinent to
-a utility like [`uname`](https://github.com/uutils/coreutils/blob/master/src/uname/uname.rs) is
+a utility like [`uname`](https://github.com/uutils/coreutils/blob/main/src/uu/uname/src/uname.rs) is
 provided; however, in the future, more functionality may become available.
 
 # Usage
