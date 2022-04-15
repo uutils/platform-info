@@ -22,7 +22,7 @@ project is as simple as adding `platform-info` to your project's `Cargo.toml`, l
 platform-info = "0.3"
 ```
 
-To see specific usage details, I recommend looking at the `uname` utility linked above as it makes
+To see specific usage details, look at the `uname` utility linked above as it makes
 use of every feature.
 */
 
