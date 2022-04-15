@@ -409,24 +409,3 @@ fn test_machine() {
     println!("{}", info.machine());
     assert!(target.contains(&&*info.machine()));
 }
-
-// TODO: figure out a way to test these
-/*
-#[test]
-fn test_nodename() {
-    let info = PlatformInfo::new().unwrap();
-    panic!("{}", info.nodename());
-}
-
-#[test]
-fn test_version() {
-    let info = PlatformInfo::new().unwrap();
-    panic!("{}", info.version());
-}
-
-#[test]
-fn test_release() {
-    let info = PlatformInfo::new().unwrap();
-    panic!("{}", info.release());
-}
-*/
