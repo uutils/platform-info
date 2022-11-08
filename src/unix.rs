@@ -14,7 +14,7 @@ use super::Uname;
 use std::borrow::Cow;
 use std::ffi::CStr;
 use std::io;
-use std::mem;
+use std::mem::MaybeUninit;
 
 macro_rules! cstr2cow {
     ($v:expr) => {
@@ -32,9 +32,11 @@ impl PlatformInfo {
     /// Creates a new instance of `PlatformInfo`.  This function *should* never fail.
     pub fn new() -> io::Result<Self> {
         unsafe {
-            #[allow(deprecated)]
-            let mut uts: utsname = mem::uninitialized();
-            if uname(&mut uts) != -1 {
+            let mut uts = MaybeUninit::<utsname>::uninit();
+            if uname(uts.as_mut_ptr()) != -1 {
+                // SAFETY: `uts` was initialized
+                let uts = uts.assume_init();
+
                 Ok(Self { inner: uts })
             } else {
                 Err(io::Error::last_os_error())

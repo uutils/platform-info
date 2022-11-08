@@ -21,7 +21,7 @@ use std::borrow::Cow;
 use std::ffi::{CStr, OsStr, OsString};
 use std::io;
 use std::iter;
-use std::mem;
+use std::mem::{self, MaybeUninit};
 use std::os::windows::ffi::{OsStrExt, OsStringExt};
 use std::path::PathBuf;
 use std::ptr;
@@ -58,10 +58,10 @@ impl PlatformInfo {
     /// it is possible for this function to fail.
     pub fn new() -> io::Result<Self> {
         unsafe {
-            #[allow(deprecated)]
-            let mut sysinfo = mem::uninitialized();
-
-            GetNativeSystemInfo(&mut sysinfo);
+            let mut sysinfo = MaybeUninit::<SYSTEM_INFO>::uninit();
+            GetNativeSystemInfo(sysinfo.as_mut_ptr());
+            // SAFETY: `sysinfo` was initialized
+            let sysinfo = sysinfo.assume_init();
 
             let (version, release) = Self::version_info()?;
             let nodename = Self::computer_name()?;
@@ -142,8 +142,8 @@ impl PlatformInfo {
         let file_info = Self::get_file_version_info(pathbuf)?;
         let (major, minor) = Self::query_version_info(file_info)?;
 
-        #[allow(deprecated)]
-        let mut info: OSVERSIONINFOEXW = unsafe { mem::uninitialized() };
+        // SAFETY: this is valid
+        let mut info = unsafe { mem::zeroed::<OSVERSIONINFOEXW>() };
         info.wSuiteMask = VER_SUITE_WH_SERVER as WORD;
         info.wProductType = VER_NT_WORKSTATION;
 
@@ -223,8 +223,7 @@ impl PlatformInfo {
 
     fn query_version_info(buffer: Vec<u8>) -> io::Result<(ULONG, ULONG)> {
         let mut block_size = 0;
-        #[allow(deprecated)]
-        let mut block = unsafe { mem::uninitialized() };
+        let mut block = ptr::null_mut();
 
         let sub_block: Vec<_> = OsStr::new("\\")
             .encode_wide()
@@ -242,6 +241,7 @@ impl PlatformInfo {
             return Err(io::Error::last_os_error());
         }
 
+        // SAFETY: `block` was replaced with a non-null pointer
         let info = unsafe { &*(block as *const VS_FIXEDFILEINFO) };
 
         Ok((
