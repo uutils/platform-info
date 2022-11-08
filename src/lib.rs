@@ -19,7 +19,7 @@ project is as simple as adding `platform-info` to your project's `Cargo.toml`, l
 
 ```toml
 [dependencies]
-platform-info = "0.3"
+platform-info = "1"
 ```
 
 To see specific usage details, look at the `uname` utility linked above as it makes
