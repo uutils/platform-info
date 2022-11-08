@@ -12,9 +12,6 @@ keywords = ["platform", "info", "system"]
 categories = ["os"]
 license = "MIT"
 
-[badges]
-appveyor = { repository = "uutils/platform-info" }
-
 [target.'cfg(not(target_os = "windows"))'.dependencies]
 libc = "0.2"
 

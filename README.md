@@ -2,7 +2,6 @@ platform-info
 =============
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Build status](https://ci.appveyor.com/api/projects/status/2wogy3wkenwreeq0/branch/master?svg=true)](https://ci.appveyor.com/project/Arcterus/platform-info/branch/master)
 [![CodeCov](https://codecov.io/gh/uutils/platform-info/branch/master/graph/badge.svg)](https://codecov.io/gh/uutils/platform-info)
 
 A simple cross-platform way to get information about the currently running
