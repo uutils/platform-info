@@ -54,6 +54,7 @@ struct VS_FIXEDFILEINFO {
 }
 
 struct WinOSVersionInfo {
+    os_name: String,
     release: String,
     version: String,
 }
@@ -134,6 +135,13 @@ impl PlatformInfo {
 
                 if func(&mut osinfo) == STATUS_SUCCESS {
                     return Ok(WinOSVersionInfo {
+                        os_name: Self::determine_os_name(
+                            osinfo.dwMajorVersion,
+                            osinfo.dwMinorVersion,
+                            osinfo.dwBuildNumber,
+                            osinfo.wProductType,
+                            osinfo.wSuiteMask,
+                        ),
                         release: format!("{}.{}", osinfo.dwMajorVersion, osinfo.dwMinorVersion),
                         version: format!("{}", osinfo.dwBuildNumber),
                     });
@@ -177,8 +185,9 @@ impl PlatformInfo {
         };
 
         Ok(WinOSVersionInfo {
-            version: format!("{}", build),
+            os_name: Self::determine_os_name(major, minor, build, product_type, suite_mask),
             release: format!("{}.{}", major, minor),
+            version: format!("{}", build),
         })
     }
 
@@ -266,20 +275,28 @@ impl PlatformInfo {
         ))
     }
 
-    fn determine_release(
+    fn determine_os_name(
         major: ULONG,
         minor: ULONG,
+        build: ULONG,
         product_type: UCHAR,
         suite_mask: USHORT,
     ) -> String {
-        let mut name = match major {
+        // [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
+        let default_name = if product_type == VER_NT_WORKSTATION {
+            format!("{} {}.{}", "Windows", major, minor)
+        } else {
+            format!("{} {}.{}", "Windows Server", major, minor)
+        };
+
+        let name = match major {
             5 => match minor {
                 0 => "Windows 2000",
                 1 => "Windows XP",
                 2 if product_type == VER_NT_WORKSTATION => "Windows XP Professional x64 Edition",
                 2 if suite_mask as UINT == VER_SUITE_WH_SERVER => "Windows Home Server",
                 2 => "Windows Server 2003",
-                _ => "",
+                _ => &default_name,
             },
             6 => match minor {
                 0 if product_type == VER_NT_WORKSTATION => "Windows Vista",
@@ -290,25 +307,25 @@ impl PlatformInfo {
                 2 => "Windows 8",
                 3 if product_type != VER_NT_WORKSTATION => "Windows Server 2012 R2",
                 3 => "Windows 8.1",
-                _ => "",
+                _ => &default_name,
             },
             10 => match minor {
-                0 if product_type != VER_NT_WORKSTATION => "Windows Server 2016",
-                _ => "",
+                0 if product_type == VER_NT_WORKSTATION && (build >= 22000) => "Windows 11",
+                0 if product_type != VER_NT_WORKSTATION && (build >= 14000 && build < 17000) => {
+                    "Windows Server 2016"
+                }
+                0 if product_type != VER_NT_WORKSTATION && (build >= 17000 && build < 19000) => {
+                    "Windows Server 2019"
+                }
+                0 if product_type != VER_NT_WORKSTATION && (build >= 20000) => {
+                    "Windows Server 2022"
+                }
+                _ => "Windows 10",
             },
-            _ => "",
+            _ => &default_name,
         };
 
-        // we're doing this down here so we don't have to copy this into multiple branches
-        if name.is_empty() {
-            name = if product_type == VER_NT_WORKSTATION {
-                "Windows"
-            } else {
-                "Windows Server"
-            };
-        }
-
-        format!("{} {}.{}", name, major, minor)
+        name.to_string()
     }
 }
 
