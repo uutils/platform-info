@@ -4,7 +4,15 @@
 //
 // For the full copyright and license information, please view the LICENSE file
 // that was distributed with this source code.
-//
+
+// Note: there no standardization of values for platform info (or `uname`), so mimic some current practices
+// busybox-v1.35.0 * `busybox uname -a` => "Windows_NT HOSTNAME 10.0 19044 x86_64 MS/Windows"
+// python-v3.8.3 => `uname_result(system='Windows', node='HOSTNAME', release='10', version='10.0.19044', machine='AMD64')`
+
+// refs:
+// [NT Version Info](https://en.wikipedia.org/wiki/Windows_NT) @@ <https://archive.is/GnnvF>
+// [NT Version Info (summary)](https://simple.wikipedia.org/wiki/Windows_NT) @@ <https://archive.is/T2StZ>
+// [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
 
 extern crate winapi;
 
@@ -45,6 +53,11 @@ struct VS_FIXEDFILEINFO {
     dwFileDateLS: DWORD,
 }
 
+struct WinOSVersionInfo {
+    release: String,
+    version: String,
+}
+
 /// `PlatformInfo` handles retrieving information for the current platform (Windows in this case).
 pub struct PlatformInfo {
     sysinfo: SYSTEM_INFO,
@@ -63,14 +76,15 @@ impl PlatformInfo {
             // SAFETY: `sysinfo` was initialized
             let sysinfo = sysinfo.assume_init();
 
-            let (version, release) = Self::version_info()?;
+            let version_info = Self::version_info()?;
+
             let nodename = Self::computer_name()?;
 
             Ok(Self {
                 sysinfo,
                 nodename,
-                version,
-                release,
+                version: version_info.version,
+                release: version_info.release,
             })
         }
     }
@@ -97,7 +111,10 @@ impl PlatformInfo {
 
     // NOTE: the only reason any of this has to be done is Microsoft deprecated GetVersionEx() and
     //       it is now basically useless for us on Windows 8.1 and Windows 10
-    unsafe fn version_info() -> io::Result<(String, String)> {
+    // ref: <https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getversionexw> @@ <https://archive.is/bYAwT>
+    // ref: <https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw> @@ <https://archive.is/n4hBb>
+    unsafe fn version_info() -> io::Result<WinOSVersionInfo> {
+        // busybox-v1.35.0 * `busybox uname -a` => "Windows_NT HOSTNAME 10.0 19044 x86_64 MS/Windows"
         let dll_wide: Vec<WCHAR> = OsStr::new("ntdll.dll")
             .encode_wide()
             .chain(iter::once(0))
@@ -114,33 +131,28 @@ impl PlatformInfo {
                 osinfo.dwOSVersionInfoSize = mem::size_of::<RTL_OSVERSIONINFOEXW>() as _;
 
                 if func(&mut osinfo) == STATUS_SUCCESS {
-                    let version = String::from_utf16_lossy(
-                        osinfo.szCSDVersion.split(|&v| v == 0).next().unwrap(),
-                    );
-                    let release = Self::determine_release(
-                        osinfo.dwMajorVersion,
-                        osinfo.dwMinorVersion,
-                        osinfo.wProductType,
-                        osinfo.wSuiteMask,
-                    );
-
-                    return Ok((version, release));
+                    return Ok(WinOSVersionInfo {
+                        release: format!("{}.{}", osinfo.dwMajorVersion, osinfo.dwMinorVersion),
+                        version: format!("{}", osinfo.dwBuildNumber),
+                    });
                 }
             }
         }
 
         // as a last resort, try to get the relevant info by loading the version info from a system
         // file (specifically Kernel32.dll)
+        // Note: this file version may be just the current "base" version and not the actual most up-to-date version info
+        // * eg: kernel32.dll (or ntdll.dll) version => "10.0.19041.2130" _vs_ `cmd /c ver` => "10.0.19044.2364"
         Self::version_info_from_file()
     }
 
-    fn version_info_from_file() -> io::Result<(String, String)> {
+    fn version_info_from_file() -> io::Result<WinOSVersionInfo> {
         use self::winapi::um::sysinfoapi;
 
         let pathbuf = Self::get_kernel32_path()?;
 
         let file_info = Self::get_file_version_info(pathbuf)?;
-        let (major, minor) = Self::query_version_info(file_info)?;
+        let (major, minor, build, _revision) = Self::query_version_info(file_info)?;
 
         // SAFETY: this is valid
         let mut info = unsafe { mem::zeroed::<OSVERSIONINFOEXW>() };
@@ -162,10 +174,10 @@ impl PlatformInfo {
             0
         };
 
-        Ok((
-            String::new(),
-            Self::determine_release(major, minor, product_type, suite_mask),
-        ))
+        Ok(WinOSVersionInfo {
+            version: format!("{}", build),
+            release: format!("{}.{}", major, minor),
+        })
     }
 
     fn get_kernel32_path() -> io::Result<PathBuf> {
@@ -221,7 +233,7 @@ impl PlatformInfo {
         }
     }
 
-    fn query_version_info(buffer: Vec<u8>) -> io::Result<(ULONG, ULONG)> {
+    fn query_version_info(buffer: Vec<u8>) -> io::Result<(ULONG, ULONG, ULONG, ULONG)> {
         let mut block_size = 0;
         let mut block = ptr::null_mut();
 
@@ -247,6 +259,8 @@ impl PlatformInfo {
         Ok((
             HIWORD(info.dwProductVersionMS) as _,
             LOWORD(info.dwProductVersionMS) as _,
+            HIWORD(info.dwProductVersionLS) as _,
+            LOWORD(info.dwProductVersionLS) as _,
         ))
     }
 
