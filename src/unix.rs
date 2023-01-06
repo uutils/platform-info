@@ -65,4 +65,8 @@ impl Uname for PlatformInfo {
     fn machine(&self) -> Cow<str> {
         cstr2cow!(self.inner.machine)
     }
+
+    fn osname(&self) -> Cow<str> {
+        Cow::Borrowed(crate::HOST_OS_NAME)
+    }
 }
