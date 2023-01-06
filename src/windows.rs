@@ -316,7 +316,7 @@ impl Uname for PlatformInfo {
 
         // XXX: if Rust ever works on Windows CE and winapi has the VER_PLATFORM_WIN32_CE
         //      constant, we should probably check for that
-        Cow::from("WindowsNT")
+        Cow::from("Windows_NT") // prior art from `busybox` and MS (from std::env::var("OS"))
     }
 
     fn nodename(&self) -> Cow<str> {
@@ -394,7 +394,8 @@ fn is_wow64() -> bool {
 
 #[test]
 fn test_sysname() {
-    assert_eq!(PlatformInfo::new().unwrap().sysname(), "WindowsNT");
+    let expected: String = std::env::var("OS").unwrap_or_else(|_| String::from("Windows_NT"));
+    assert_eq!(PlatformInfo::new().unwrap().sysname(), expected);
 }
 
 #[test]
