@@ -311,10 +311,10 @@ impl PlatformInfo {
             },
             10 => match minor {
                 0 if product_type == VER_NT_WORKSTATION && (build >= 22000) => "Windows 11",
-                0 if product_type != VER_NT_WORKSTATION && (build >= 14000 && build < 17000) => {
+                0 if product_type != VER_NT_WORKSTATION && (14000..17000).contains(&build) => {
                     "Windows Server 2016"
                 }
-                0 if product_type != VER_NT_WORKSTATION && (build >= 17000 && build < 19000) => {
+                0 if product_type != VER_NT_WORKSTATION && (17000..19000).contains(&build) => {
                     "Windows Server 2019"
                 }
                 0 if product_type != VER_NT_WORKSTATION && (build >= 20000) => {
