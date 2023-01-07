@@ -16,9 +16,9 @@ fn platform() -> Result<(), String> {
     assert!(!uname.sysname().is_empty());
     assert!(!uname.nodename().is_empty());
     assert!(!uname.release().is_empty());
-    #[cfg(not(windows))] // empty on windows
     assert!(!uname.version().is_empty());
     assert!(!uname.machine().is_empty());
+
     Ok(())
 }
 
@@ -34,7 +34,7 @@ fn platform_windows_specific() -> Result<(), String> {
     println!("release = {}", uname.release());
 
     assert!(!uname.nodename().is_empty());
-    //    assert!(!uname.version().is_empty());
+    assert!(!uname.version().is_empty());
     assert!(!uname.release().is_empty());
 
     Ok(())
