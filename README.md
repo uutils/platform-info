@@ -3,7 +3,7 @@ platform-info
 
 [![Crates.io](https://img.shields.io/crates/v/platform-info.svg)](https://crates.io/crates/platform-info)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![CodeCov](https://codecov.io/gh/uutils/platform-info/branch/master/graph/badge.svg)](https://codecov.io/gh/uutils/platform-info)
+[![CodeCov](https://codecov.io/gh/uutils/platform-info/branch/main/graph/badge.svg)](https://codecov.io/gh/uutils/platform-info/tree/main)
 
 A simple cross-platform way to get information about the currently running
 system.
