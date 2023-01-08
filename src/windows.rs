@@ -426,7 +426,8 @@ fn test_sysname() {
 
 #[test]
 fn test_machine() {
-    let target = if cfg!(target_arch = "x86_64") || (cfg!(target_arch = "x86") && is_wow64()) {
+    let is_wow64 = is_wow64();
+    let target = if cfg!(target_arch = "x86_64") || (cfg!(target_arch = "x86") && is_wow64) {
         vec!["x86_64"]
     } else if cfg!(target_arch = "x86") {
         vec!["i386", "i486", "i586", "i686"]
