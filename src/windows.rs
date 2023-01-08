@@ -447,3 +447,10 @@ fn test_machine() {
     println!("{}", info.machine());
     assert!(target.contains(&&*info.machine()));
 }
+
+#[test]
+fn test_osname() {
+    let info = PlatformInfo::new().unwrap();
+    println!("osname = '{}'", info.osname());
+    assert!(info.osname().starts_with(crate::HOST_OS_NAME));
+}
