@@ -53,6 +53,7 @@ struct VS_FIXEDFILEINFO {
     dwFileDateLS: DWORD,
 }
 
+#[derive(Debug)]
 struct WinOSVersionInfo {
     os_name: String,
     release: String,
@@ -455,4 +456,24 @@ fn test_osname() {
     let info = PlatformInfo::new().unwrap();
     println!("osname = '{}'", info.osname());
     assert!(info.osname().starts_with(crate::HOST_OS_NAME));
+}
+
+#[test]
+fn test_version_vs_version() {
+    let version_via_dll = unsafe { PlatformInfo::version_info().unwrap() };
+    let version_via_file = PlatformInfo::version_info_from_file().unwrap();
+
+    println!("version (via dll) = '{:#?}'", version_via_dll);
+    println!("version (via file) = '{:#?}'", version_via_file);
+
+    assert_eq!(version_via_dll.os_name, version_via_file.os_name);
+    assert_eq!(version_via_dll.release, version_via_file.release);
+    // the "version" portions may differ, but should have only slight variation
+    // * assume that "version" is convertible to u32 + "version" from file is always earlier/smaller and may differ only below the thousands digit
+    // * ref: [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
+    assert!(
+        (version_via_dll.version.parse::<u32>().unwrap()
+            - version_via_file.version.parse::<u32>().unwrap())
+            < 1000
+    );
 }
