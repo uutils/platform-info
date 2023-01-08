@@ -141,7 +141,7 @@ impl PlatformInfo {
                             osinfo.dwMinorVersion,
                             osinfo.dwBuildNumber,
                             osinfo.wProductType,
-                            osinfo.wSuiteMask,
+                            osinfo.wSuiteMask.into(),
                         ),
                         release: format!("{}.{}", osinfo.dwMajorVersion, osinfo.dwMinorVersion),
                         version: format!("{}", osinfo.dwBuildNumber),
@@ -172,7 +172,7 @@ impl PlatformInfo {
 
         let mask = unsafe { sysinfoapi::VerSetConditionMask(0, VER_SUITENAME, VER_EQUAL) };
         let suite_mask = if unsafe { VerifyVersionInfoW(&mut info, VER_SUITENAME, mask) } != 0 {
-            VER_SUITE_WH_SERVER as USHORT
+            VER_SUITE_WH_SERVER
         } else {
             0
         };
@@ -245,7 +245,7 @@ impl PlatformInfo {
         }
     }
 
-    fn query_version_info(buffer: Vec<u8>) -> io::Result<(ULONG, ULONG, ULONG, ULONG)> {
+    fn query_version_info(buffer: Vec<u8>) -> io::Result<(DWORD, DWORD, DWORD, DWORD)> {
         let mut block_size = 0;
         let mut block = ptr::null_mut();
 
@@ -277,11 +277,11 @@ impl PlatformInfo {
     }
 
     fn determine_os_name(
-        major: ULONG,
-        minor: ULONG,
-        build: ULONG,
-        product_type: UCHAR,
-        suite_mask: USHORT,
+        major: DWORD,
+        minor: DWORD,
+        build: DWORD,
+        product_type: BYTE,
+        suite_mask: DWORD,
     ) -> String {
         // [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
         let default_name = if product_type == VER_NT_WORKSTATION {
@@ -295,7 +295,7 @@ impl PlatformInfo {
                 0 => "Windows 2000",
                 1 => "Windows XP",
                 2 if product_type == VER_NT_WORKSTATION => "Windows XP Professional x64 Edition",
-                2 if suite_mask as UINT == VER_SUITE_WH_SERVER => "Windows Home Server",
+                2 if suite_mask == VER_SUITE_WH_SERVER => "Windows Home Server",
                 2 => "Windows Server 2003",
                 _ => &default_name,
             },
