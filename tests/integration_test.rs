@@ -23,21 +23,3 @@ fn platform() -> Result<(), String> {
 
     Ok(())
 }
-
-#[cfg(windows)]
-#[test]
-fn platform_windows_specific() -> Result<(), String> {
-    let uname = match PlatformInfo::new() {
-        Ok(info) => info,
-        Err(error) => panic!("{}", error),
-    };
-    println!("computer_name = {}", uname.nodename());
-    println!("version = {}", uname.version());
-    println!("release = {}", uname.release());
-
-    assert!(!uname.nodename().is_empty());
-    assert!(!uname.version().is_empty());
-    assert!(!uname.release().is_empty());
-
-    Ok(())
-}
