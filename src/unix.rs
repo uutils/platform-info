@@ -65,4 +65,15 @@ impl Uname for PlatformInfo {
     fn machine(&self) -> Cow<str> {
         cstr2cow!(self.inner.machine)
     }
+
+    fn osname(&self) -> Cow<str> {
+        Cow::Borrowed(crate::HOST_OS_NAME)
+    }
+}
+
+#[test]
+fn test_osname() {
+    let info = PlatformInfo::new().unwrap();
+    println!("osname = '{}'", info.osname());
+    assert_eq!(PlatformInfo::new().unwrap().osname(), crate::HOST_OS_NAME);
 }

@@ -22,6 +22,7 @@ fn main() {
     println!("{}", uname.release());
     println!("{}", uname.version());
     println!("{}", uname.machine());
+    println!("{}", uname.osname());
 }
 ```
 should return something like:
@@ -31,6 +32,7 @@ hostname
 5.10.0-8-amd64
 #1 SMP Debian 5.10.46-4 (2021-08-03)
 x86_64
+GNU/Linux
 ```
 
 License

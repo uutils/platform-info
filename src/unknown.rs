@@ -37,6 +37,10 @@ impl Uname for PlatformInfo {
     fn machine(&self) -> Cow<str> {
         Cow::Borrowed("unknown")
     }
+
+    fn osname(&self) -> Cow<str> {
+        Cow::Borrowed("unknown")
+    }
 }
 
 #[test]
@@ -48,4 +52,5 @@ fn test_unknown() {
     assert_eq!(platform_info.release(), "unknown");
     assert_eq!(platform_info.version(), "unknown");
     assert_eq!(platform_info.machine(), "unknown");
+    assert_eq!(platform_info.osname(), "unknown");
 }

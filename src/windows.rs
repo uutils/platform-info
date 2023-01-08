@@ -53,7 +53,9 @@ struct VS_FIXEDFILEINFO {
     dwFileDateLS: DWORD,
 }
 
+#[derive(Debug)]
 struct WinOSVersionInfo {
+    os_name: String,
     release: String,
     version: String,
 }
@@ -64,6 +66,7 @@ pub struct PlatformInfo {
     nodename: String,
     release: String,
     version: String,
+    osname: String,
 }
 
 impl PlatformInfo {
@@ -85,6 +88,7 @@ impl PlatformInfo {
                 nodename,
                 version: version_info.version,
                 release: version_info.release,
+                osname: format!("{} ({})", crate::HOST_OS_NAME, version_info.os_name),
             })
         }
     }
@@ -132,6 +136,13 @@ impl PlatformInfo {
 
                 if func(&mut osinfo) == STATUS_SUCCESS {
                     return Ok(WinOSVersionInfo {
+                        os_name: Self::determine_os_name(
+                            osinfo.dwMajorVersion,
+                            osinfo.dwMinorVersion,
+                            osinfo.dwBuildNumber,
+                            osinfo.wProductType,
+                            osinfo.wSuiteMask.into(),
+                        ),
                         release: format!("{}.{}", osinfo.dwMajorVersion, osinfo.dwMinorVersion),
                         version: format!("{}", osinfo.dwBuildNumber),
                     });
@@ -161,7 +172,7 @@ impl PlatformInfo {
 
         let mask = unsafe { sysinfoapi::VerSetConditionMask(0, VER_SUITENAME, VER_EQUAL) };
         let suite_mask = if unsafe { VerifyVersionInfoW(&mut info, VER_SUITENAME, mask) } != 0 {
-            VER_SUITE_WH_SERVER as USHORT
+            VER_SUITE_WH_SERVER
         } else {
             0
         };
@@ -175,8 +186,9 @@ impl PlatformInfo {
         };
 
         Ok(WinOSVersionInfo {
-            version: format!("{}", build),
+            os_name: Self::determine_os_name(major, minor, build, product_type, suite_mask),
             release: format!("{}.{}", major, minor),
+            version: format!("{}", build),
         })
     }
 
@@ -233,7 +245,7 @@ impl PlatformInfo {
         }
     }
 
-    fn query_version_info(buffer: Vec<u8>) -> io::Result<(ULONG, ULONG, ULONG, ULONG)> {
+    fn query_version_info(buffer: Vec<u8>) -> io::Result<(DWORD, DWORD, DWORD, DWORD)> {
         let mut block_size = 0;
         let mut block = ptr::null_mut();
 
@@ -264,20 +276,28 @@ impl PlatformInfo {
         ))
     }
 
-    fn determine_release(
-        major: ULONG,
-        minor: ULONG,
-        product_type: UCHAR,
-        suite_mask: USHORT,
+    fn determine_os_name(
+        major: DWORD,
+        minor: DWORD,
+        build: DWORD,
+        product_type: BYTE,
+        suite_mask: DWORD,
     ) -> String {
-        let mut name = match major {
+        // [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
+        let default_name = if product_type == VER_NT_WORKSTATION {
+            format!("{} {}.{}", "Windows", major, minor)
+        } else {
+            format!("{} {}.{}", "Windows Server", major, minor)
+        };
+
+        let name = match major {
             5 => match minor {
                 0 => "Windows 2000",
                 1 => "Windows XP",
                 2 if product_type == VER_NT_WORKSTATION => "Windows XP Professional x64 Edition",
-                2 if suite_mask as UINT == VER_SUITE_WH_SERVER => "Windows Home Server",
+                2 if suite_mask == VER_SUITE_WH_SERVER => "Windows Home Server",
                 2 => "Windows Server 2003",
-                _ => "",
+                _ => &default_name,
             },
             6 => match minor {
                 0 if product_type == VER_NT_WORKSTATION => "Windows Vista",
@@ -288,25 +308,25 @@ impl PlatformInfo {
                 2 => "Windows 8",
                 3 if product_type != VER_NT_WORKSTATION => "Windows Server 2012 R2",
                 3 => "Windows 8.1",
-                _ => "",
+                _ => &default_name,
             },
             10 => match minor {
-                0 if product_type != VER_NT_WORKSTATION => "Windows Server 2016",
-                _ => "",
+                0 if product_type == VER_NT_WORKSTATION && (build >= 22000) => "Windows 11",
+                0 if product_type != VER_NT_WORKSTATION && (14000..17000).contains(&build) => {
+                    "Windows Server 2016"
+                }
+                0 if product_type != VER_NT_WORKSTATION && (17000..19000).contains(&build) => {
+                    "Windows Server 2019"
+                }
+                0 if product_type != VER_NT_WORKSTATION && (build >= 20000) => {
+                    "Windows Server 2022"
+                }
+                _ => "Windows 10",
             },
-            _ => "",
+            _ => &default_name,
         };
 
-        // we're doing this down here so we don't have to copy this into multiple branches
-        if name.is_empty() {
-            name = if product_type == VER_NT_WORKSTATION {
-                "Windows"
-            } else {
-                "Windows Server"
-            };
-        }
-
-        format!("{} {}.{}", name, major, minor)
+        name.to_string()
     }
 }
 
@@ -361,6 +381,10 @@ impl Uname for PlatformInfo {
 
         Cow::from(arch_str)
     }
+
+    fn osname(&self) -> Cow<str> {
+        Cow::from(self.osname.as_str())
+    }
 }
 
 #[cfg(test)]
@@ -394,13 +418,16 @@ fn is_wow64() -> bool {
 
 #[test]
 fn test_sysname() {
+    let info = PlatformInfo::new().unwrap();
     let expected: String = std::env::var("OS").unwrap_or_else(|_| String::from("Windows_NT"));
-    assert_eq!(PlatformInfo::new().unwrap().sysname(), expected);
+    println!("sysname = '{}'", info.sysname());
+    assert_eq!(info.sysname(), expected);
 }
 
 #[test]
 fn test_machine() {
-    let target = if cfg!(target_arch = "x86_64") || (cfg!(target_arch = "x86") && is_wow64()) {
+    let is_wow64 = is_wow64();
+    let target = if cfg!(target_arch = "x86_64") || (cfg!(target_arch = "x86") && is_wow64) {
         vec!["x86_64"]
     } else if cfg!(target_arch = "x86") {
         vec!["i386", "i486", "i586", "i686"]
@@ -421,6 +448,146 @@ fn test_machine() {
 
     let info = PlatformInfo::new().unwrap();
 
-    println!("{}", info.machine());
+    println!("machine = '{}'", info.machine());
     assert!(target.contains(&&*info.machine()));
+}
+
+#[test]
+fn test_osname() {
+    let info = PlatformInfo::new().unwrap();
+    println!("osname = '{}'", info.osname());
+    assert!(info.osname().starts_with(crate::HOST_OS_NAME));
+}
+
+#[test]
+fn test_version_vs_version() {
+    let version_via_dll = unsafe { PlatformInfo::version_info().unwrap() };
+    let version_via_file = PlatformInfo::version_info_from_file().unwrap();
+
+    println!("version (via dll) = '{:#?}'", version_via_dll);
+    println!("version (via file) = '{:#?}'", version_via_file);
+
+    assert_eq!(version_via_dll.os_name, version_via_file.os_name);
+    assert_eq!(version_via_dll.release, version_via_file.release);
+    // the "version" portions may differ, but should have only slight variation
+    // * assume that "version" is convertible to u32 + "version" from file is always earlier/smaller and may differ only below the thousands digit
+    // * ref: [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
+    assert!(
+        (version_via_dll.version.parse::<u32>().unwrap()
+            - version_via_file.version.parse::<u32>().unwrap())
+            < 1000
+    );
+}
+
+#[test]
+fn test_known_os_names() {
+    // ref: [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
+    assert_eq!(
+        PlatformInfo::determine_os_name(3, 1, 528, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 3.1"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(3, 5, 807, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 3.5"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(3, 51, 1057, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 3.51"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(4, 0, 1381, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 4.0"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 0, 2195, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 2000"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 1, 2600, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows XP"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 2, 3790, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows XP Professional x64 Edition"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 2, 3790, VER_NT_SERVER, VER_SUITE_WH_SERVER),
+        "Windows Home Server"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 2, 3790, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2003"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 2, 3790, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2003"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 0, 6000, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows Vista"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 0, 6001, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2008"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 1, 7600, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 7"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 1, 7600, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2008 R2"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 2, 9200, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2012"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 2, 9200, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 8"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 3, 9600, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 8.1"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 3, 9600, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2012 R2"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 10240, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 10"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 17134, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 10"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 19141, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 10"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 19145, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 10"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 14393, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2016"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 17763, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2019"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 20348, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2022"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 22000, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 11"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 22621, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 11"
+    );
 }
