@@ -7,12 +7,12 @@ fn platform() -> Result<(), String> {
         Err(error) => panic!("{}", error),
     };
 
-    println!("sysname = {}", uname.sysname());
-    println!("nodename = {}", uname.nodename());
-    println!("release = {}", uname.release());
-    println!("version = {}", uname.version());
-    println!("machine = {}", uname.machine());
-    println!("osname = {}", uname.osname());
+    println!("sysname = '{}'", uname.sysname());
+    println!("nodename = '{}'", uname.nodename());
+    println!("release = '{}'", uname.release());
+    println!("version = '{}'", uname.version());
+    println!("machine = '{}'", uname.machine());
+    println!("osname = '{}'", uname.osname());
 
     assert!(!uname.sysname().is_empty());
     assert!(!uname.nodename().is_empty());

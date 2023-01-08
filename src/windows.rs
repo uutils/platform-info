@@ -417,8 +417,10 @@ fn is_wow64() -> bool {
 
 #[test]
 fn test_sysname() {
+    let info = PlatformInfo::new().unwrap();
     let expected: String = std::env::var("OS").unwrap_or_else(|_| String::from("Windows_NT"));
-    assert_eq!(PlatformInfo::new().unwrap().sysname(), expected);
+    println!("sysname = '{}'", info.sysname());
+    assert_eq!(info.sysname(), expected);
 }
 
 #[test]
@@ -444,7 +446,7 @@ fn test_machine() {
 
     let info = PlatformInfo::new().unwrap();
 
-    println!("{}", info.machine());
+    println!("machine = '{}'", info.machine());
     assert!(target.contains(&&*info.machine()));
 }
 
