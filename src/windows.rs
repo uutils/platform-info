@@ -478,3 +478,116 @@ fn test_version_vs_version() {
             < 1000
     );
 }
+
+#[test]
+fn test_known_os_names() {
+    // ref: [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
+    assert_eq!(
+        PlatformInfo::determine_os_name(3, 1, 528, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 3.1"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(3, 5, 807, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 3.5"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(3, 51, 1057, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 3.51"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(4, 0, 1381, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 4.0"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 0, 2195, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 2000"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 1, 2600, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows XP"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 2, 3790, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows XP Professional x64 Edition"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 2, 3790, VER_NT_SERVER, VER_SUITE_WH_SERVER),
+        "Windows Home Server"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 2, 3790, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2003"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(5, 2, 3790, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2003"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 0, 6000, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows Vista"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 0, 6001, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2008"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 1, 7600, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 7"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 1, 7600, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2008 R2"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 2, 9200, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2012"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 2, 9200, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 8"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 3, 9600, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 8.1"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(6, 3, 9600, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2012 R2"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 10240, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 10"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 17134, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 10"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 19141, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 10"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 19145, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 10"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 14393, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2016"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 17763, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2019"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 20348, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 2022"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 22000, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 11"
+    );
+    assert_eq!(
+        PlatformInfo::determine_os_name(10, 0, 22621, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 11"
+    );
+}
