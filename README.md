@@ -12,7 +12,10 @@ Example
 -------
 
 This simple example:
-```
+
+```rust
+// `cargo run --example ex` (executes this example)
+
 use platform_info::*;
 
 fn main() {
@@ -25,8 +28,10 @@ fn main() {
     println!("{}", uname.osname());
 }
 ```
+
 should return something like:
-```
+
+```text
 Linux
 hostname
 5.10.0-8-amd64
@@ -34,6 +39,8 @@ hostname
 x86_64
 GNU/Linux
 ```
+
+Use `cargo run --example ex` to execute this code.
 
 License
 -------
