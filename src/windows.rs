@@ -425,6 +425,15 @@ fn test_sysname() {
 }
 
 #[test]
+#[allow(non_snake_case)]
+fn test_nodename_no_trailing_NUL() {
+    let info = PlatformInfo::new().unwrap();
+    let nodename = info.nodename();
+    let trimmed = nodename.trim().trim_end_matches(|c| c == '\0');
+    assert_eq!(nodename, trimmed);
+}
+
+#[test]
 fn test_machine() {
     let is_wow64 = is_wow64();
     let target = if cfg!(target_arch = "x86_64") || (cfg!(target_arch = "x86") && is_wow64) {
