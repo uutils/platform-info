@@ -11,18 +11,17 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --examples
+      - name: Install `rust` toolchain
+        shell: bash
+        env:
+          TOOLCHAIN: stable
+        run: |
+          ## Install `rust` toolchain
+          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
+          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
+          rustup default ${TOOLCHAIN}
+      - run: cargo check
+      - run: cargo check --examples
 
   test:
     name: cargo test
@@ -32,53 +31,56 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - name: Install `rust` toolchain
+        shell: bash
+        env:
+          TOOLCHAIN: stable
+        run: |
+          ## Install `rust` toolchain
+          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
+          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
+          rustup default ${TOOLCHAIN}
+      - run: cargo test
+        env:
+          RUST_BACKTRACE: '1'
 
   fmt:
-    name: cargo fmt --all -- --check
+    name: cargo fmt
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+      - name: Install `rust` toolchain
+        shell: bash
+        env:
+          TOOLCHAIN: stable
+        run: |
+          ## Install `rust` toolchain
+          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
+          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
+          rustup default ${TOOLCHAIN}
       - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - run: cargo fmt --all -- --check
 
   clippy:
-    name: cargo clippy -- -D warnings
+    name: cargo clippy
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+      - name: Install `rust` toolchain
+        shell: bash
+        env:
+          TOOLCHAIN: stable
+        run: |
+          ## Install `rust` toolchain
+          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
+          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
+          rustup default ${TOOLCHAIN}
       - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --examples -- -D warnings
+      - run: cargo clippy -- -D warnings
+      - run: cargo clippy --examples -- -D warnings
 
   coverage:
     name: Code Coverage
@@ -111,41 +113,26 @@ jobs:
           # * CODECOV_FLAGS
           CODECOV_FLAGS=$( echo "${{ matrix.job.os }}" | sed 's/[^[:alnum:]]/_/g' )
           outputs CODECOV_FLAGS
-
-      - name: rust toolchain ~ install
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ steps.vars.outputs.TOOLCHAIN }}
-          default: true
-          profile: minimal # minimal component installation (ie, no documentation)
+      - name: Install `rust` toolchain
+        shell: bash
+        env:
+          TOOLCHAIN: ${{ steps.vars.outputs.TOOLCHAIN }}
+        run: |
+          ## Install `rust` toolchain
+          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
+          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
+          rustup default ${TOOLCHAIN}
+      - run: cargo install grcov
       - name: Test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --no-fail-fast
+        shell: bash
         env:
           CARGO_INCREMENTAL: '0'
           RUSTC_WRAPPER: ''
           RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort'
           RUSTDOCFLAGS: '-Cpanic=abort'
-      - name: '`grcov` ~ install'
-        id: build_grcov
-        shell: bash
         run: |
-          git clone https://github.com/mozilla/grcov.git ~/grcov/
-          cd ~/grcov
-          # Hardcode the version of crossbeam-epoch. See
-          # https://github.com/uutils/coreutils/issues/3680
-          sed -i -e "s|tempfile =|crossbeam-epoch = \"=0.9.8\"\ntempfile =|" Cargo.toml
-          cargo install --path .
-          cd -
-      # Uncomment when the upstream issue
-      # https://github.com/mozilla/grcov/issues/849 is fixed
-      #      uses: actions-rs/install@v0.1
-      #      with:
-      #        crate: grcov
-      #        version: latest
-      #        use-tool-cache: false
+          ## Test
+          cargo test ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --no-fail-fast
       - name: Generate coverage data (via `grcov`)
         id: coverage
         shell: bash
