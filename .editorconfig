@@ -1,0 +1,80 @@
+# EditorConfig (is awesome!; ref: http://EditorConfig.org)
+# ref: [EditorConfig ~ Level-0 Coding Standard](https://themightyprogrammer.dev/article/editor-config) @@ <https://archive.is/5wK2a>
+# v2023.01.23; rivy
+
+# spell-checker:ignore (words) akefile makefile makefiles MSVC POSIX VCproj
+
+# * top-most EditorConfig file
+root = true
+
+[*]
+# default ~ utf-8, unix-style newlines with a newline ending every file, 4 space indentation (and tab width)
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+max_line_length = 100
+smart_tabs = unset  # ## unstable; ref: <https://github.com/editorconfig/editorconfig/issues/323>
+tab_width = unset # default to 'indent_size'
+trim_trailing_whitespace = true
+
+[{[Mm]akefile{,.*},*.{mak,mk,[Mm][Aa][Kk],[Mm][Kk]},[Gg][Nn][Uu]makefile}]
+# makefiles ~ TAB-style indentation
+indent_style = tab
+
+[*.{bash,sh}]
+# Linux/POSIX shell scripts
+indent_size = 4
+indent_style = space
+
+[*.{bat,cmd,[Bb][Aa][Tt],[Cc][Mm][Dd]}]
+# BAT/CMD ~ DOS/Win requires BAT/CMD files to have CRLF EOLNs
+end_of_line = crlf
+
+[*.{c,cc,cpp,cxx,h,hh,hpp,hxx,[Cc],[Cc][Cc],[Cc][Pp][Pp],[Cc][Xx][Xx],[Hh],[Hh][Hh],[Hh][Pp][Pp],[Hh][Xx][Xx]}]
+# C/C++
+indent_size = 3
+smart_tabs = true  # ## unstable; ref: <https://github.com/editorconfig/editorconfig/issues/323>
+
+[*.{cjs,cjx,cts,ctx,js,jsx,mjs,mts,mtx,ts,tsx,json,jsonc,vue}]
+# js/ts/json ~ Prettier/XO-style == TAB indention + SPACE alignment
+indent_size = 2
+indent_style = tab
+smart_tabs = true  # ## unstable; ref: <https://github.com/editorconfig/editorconfig/issues/323>
+
+[*.go]
+# go ~ TAB-style indentation (SPACE-style alignment); ref: <https://blog.golang.org/gofmt>@@<https://archive.is/wip/9B6FC>
+indent_style = tab
+smart_tabs = true # ## unstable; ref: <https://github.com/editorconfig/editorconfig/issues/323>
+
+[*.hs,*.cabal]
+# Haskell (and related) files
+indent_size = 2
+indent_style = space
+smart_tabs = true # ## unstable; ref: <https://github.com/editorconfig/editorconfig/issues/323>
+
+[*.jq]
+# `jq` script files
+indent_size = 2
+indent_style = space
+
+[*.{markdown,md,mkd,[Mm][Dd],[Mm][Kk][Dd],[Mm][Dd][Oo][Ww][Nn],[Mm][Kk][Dd][Oo][Ww][Nn],[Mm][Aa][Rr][Kk][Dd][Oo][Ww][Nn]}]
+# markdown
+indent_size = 2
+indent_style = space
+
+[*.{sln,vc{,x}proj{,.*},[Ss][Ln][Nn],[Vv][Cc]{,[Xx]}[Pp][Rr][Oo][Jj]{,.*}}]
+# MSVC sln/vcproj/vcxproj files, when used, will persistantly revert to CRLF EOLNs and eat final EOLs
+end_of_line = crlf
+insert_final_newline = false
+
+[*.{toml,[Tt][Oo][Mm][Ll]}]
+# TOML
+indent_size = 2
+indent_style = space
+
+[*.{yaml,yml,[Yy][Aa][Mm][Ll],[Yy][Mm][Ll]}]
+# YAML
+indent_size = 2
+indent_style = space
