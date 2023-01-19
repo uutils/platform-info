@@ -1,3 +1,6 @@
+# spell-checker:ignore (rust) clippy rustfmt rustup RUSTC RUSTFLAGS Zpanic Cpanic RUSTDOCFLAGS Ccodegen Coverflow
+# spell-checker:ignore (bash) alnum esac (jargon) maint (utils) codecov grcov lcov (vars) tempfile () ntempfile
+
 on: [push, pull_request]
 
 name: Basic CI
