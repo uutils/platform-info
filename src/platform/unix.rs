@@ -7,14 +7,14 @@
 // that was distributed with this source code.
 //
 
-extern crate libc;
-
-use self::libc::{uname, utsname};
-use super::Uname;
 use std::borrow::Cow;
 use std::ffi::CStr;
 use std::io;
 use std::mem::MaybeUninit;
+
+use libc::{uname, utsname};
+
+use crate::Uname;
 
 macro_rules! cstr2cow {
     ($v:expr) => {

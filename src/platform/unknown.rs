@@ -6,8 +6,9 @@
 // that was distributed with this source code.
 //
 
-use super::Uname;
 use std::borrow::Cow;
+
+use crate::Uname;
 
 pub struct PlatformInfo(());
 

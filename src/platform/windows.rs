@@ -14,17 +14,6 @@
 // [NT Version Info (summary)](https://simple.wikipedia.org/wiki/Windows_NT) @@ <https://archive.is/T2StZ>
 // [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
 
-extern crate winapi;
-
-use self::winapi::shared::minwindef::*;
-use self::winapi::shared::ntdef::NTSTATUS;
-use self::winapi::shared::ntstatus::*;
-use self::winapi::um::libloaderapi::*;
-use self::winapi::um::sysinfoapi::*;
-use self::winapi::um::winbase::*;
-use self::winapi::um::winnt::*;
-use self::winapi::um::winver::*;
-use super::Uname;
 use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::ffi::{CStr, OsStr, OsString};
@@ -34,6 +23,17 @@ use std::mem::{self, MaybeUninit};
 use std::os::windows::ffi::{OsStrExt, OsStringExt};
 use std::path::PathBuf;
 use std::ptr;
+
+use winapi::shared::minwindef::*;
+use winapi::shared::ntdef::NTSTATUS;
+use winapi::shared::ntstatus::*;
+use winapi::um::libloaderapi::*;
+use winapi::um::sysinfoapi::*;
+use winapi::um::winbase::*;
+use winapi::um::winnt::*;
+use winapi::um::winver::*;
+
+use crate::Uname;
 
 #[allow(unused_variables)]
 #[allow(non_snake_case)]
@@ -161,7 +161,7 @@ impl PlatformInfo {
     }
 
     fn version_info_from_file() -> io::Result<WinOSVersionInfo> {
-        use self::winapi::um::sysinfoapi;
+        use winapi::um::sysinfoapi;
 
         let pathbuf = Self::get_kernel32_path()?;
 
@@ -392,7 +392,7 @@ impl Uname for PlatformInfo {
 
 #[cfg(test)]
 fn is_wow64() -> bool {
-    use self::winapi::um::processthreadsapi::*;
+    use winapi::um::processthreadsapi::*;
 
     let mut result = FALSE;
 
