@@ -26,6 +26,9 @@ To see specific usage details, look at the `uname` utility linked above as it ma
 use of every feature.
 */
 
+// spell-checker:ignore (API) nodename osname sysname
+// spell-checker:ignore (uutils) coreutils uutils
+
 use std::borrow::Cow;
 
 mod lib_impl;

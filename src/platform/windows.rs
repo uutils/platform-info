@@ -14,6 +14,16 @@
 // [NT Version Info (summary)](https://simple.wikipedia.org/wiki/Windows_NT) @@ <https://archive.is/T2StZ>
 // [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
 
+// spell-checker:ignore (abbrev) MSVC
+// spell-checker:ignore (API) sysname osname nodename
+// spell-checker:ignore (jargon) armv aarch
+// spell-checker:ignore (rust) repr stdcall uninit
+// spell-checker:ignore (uutils) coreutils uutils
+// spell-checker:ignore (vars) mmbr mmrb
+// spell-checker:ignore (VSCode) endregion
+// spell-checker:ignore (WinAPI) ctypes CWSTR DWORDLONG dwStrucVersion FARPROC FIXEDFILEINFO HIWORD HMODULE libloaderapi LOWORD LPCSTR LPCVOID LPCWSTR lpdw LPDWORD lplp LPOSVERSIONINFOEXW LPSYSTEM lptstr LPVOID LPWSTR minwindef ntdef ntstatus OSVERSIONINFOEXW processthreadsapi PUINT SMALLBUSINESS SUITENAME sysinfo sysinfoapi sysinfoapi TCHAR TCHARs ULONGLONG WCHAR WCHARs winapi winbase winver WSTR wstring
+// spell-checker:ignore (WinOS) ntdll
+
 use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::ffi::{CStr, OsStr, OsString};

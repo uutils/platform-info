@@ -5,7 +5,13 @@
 //
 // For the full copyright and license information, please view the LICENSE file
 // that was distributed with this source code.
-//
+
+// spell-checker:ignore (API) nodename osname sysname
+// spell-checker:ignore (libc) libc utsname
+// spell-checker:ignore (names) Jian Zeng * anonymousknight96
+// spell-checker:ignore (rust) uninit
+// spell-checker:ignore (uutils) coreutils uutils
+// spell-checker:ignore (VSCode) endregion
 
 use std::borrow::Cow;
 use std::ffi::CStr;
