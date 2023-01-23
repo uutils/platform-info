@@ -30,27 +30,29 @@ use of every feature.
 // spell-checker:ignore (uutils) coreutils uutils
 
 use std::borrow::Cow;
+use std::ffi::OsString;
 
 mod lib_impl;
 pub use lib_impl::*;
 
-/// `Uname` is meant for types that can provide information relevant to `uname`.
-pub trait Uname {
+/// `PlatformInfoAPI` defines a trait API providing `uname` (aka "Unix name") style platform information.
+// ref: <https://www.gnu.org/software/libc/manual/html_node/Platform-Type.html> @@ <https://archive.is/YjjWJ>
+pub trait PlatformInfoAPI {
     /// The name of this implementation of the operating system.
-    fn sysname(&self) -> Cow<str>;
+    fn sysname(&self) -> Result<Cow<str>, &OsString>;
 
     /// The node name (network node hostname) of this machine.
-    fn nodename(&self) -> Cow<str>;
+    fn nodename(&self) -> Result<Cow<str>, &OsString>;
 
     /// The current release level of the operating system.
-    fn release(&self) -> Cow<str>;
+    fn release(&self) -> Result<Cow<str>, &OsString>;
 
     /// The current version level of the current release.
-    fn version(&self) -> Cow<str>;
+    fn version(&self) -> Result<Cow<str>, &OsString>;
 
     /// The name of the current system's hardware.
-    fn machine(&self) -> Cow<str>;
+    fn machine(&self) -> Result<Cow<str>, &OsString>;
 
     /// The name of the current OS.
-    fn osname(&self) -> Cow<str>;
+    fn osname(&self) -> Result<Cow<str>, &OsString>;
 }
