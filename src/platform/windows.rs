@@ -161,7 +161,7 @@ impl PlatformInfo {
     }
 
     fn version_info_from_file() -> io::Result<WinOSVersionInfo> {
-        use winapi::um::sysinfoapi;
+        use winapi::um::sysinfoapi::VerSetConditionMask;
 
         let pathbuf = Self::get_kernel32_path()?;
 
@@ -173,14 +173,14 @@ impl PlatformInfo {
         info.wSuiteMask = VER_SUITE_WH_SERVER as WORD;
         info.wProductType = VER_NT_WORKSTATION;
 
-        let mask = unsafe { sysinfoapi::VerSetConditionMask(0, VER_SUITENAME, VER_EQUAL) };
+        let mask = unsafe { VerSetConditionMask(0, VER_SUITENAME, VER_EQUAL) };
         let suite_mask = if unsafe { VerifyVersionInfoW(&mut info, VER_SUITENAME, mask) } != 0 {
             VER_SUITE_WH_SERVER
         } else {
             0
         };
 
-        let mask = unsafe { sysinfoapi::VerSetConditionMask(0, VER_PRODUCT_TYPE, VER_EQUAL) };
+        let mask = unsafe { VerSetConditionMask(0, VER_PRODUCT_TYPE, VER_EQUAL) };
         let product_type = if unsafe { VerifyVersionInfoW(&mut info, VER_PRODUCT_TYPE, mask) } != 0
         {
             VER_NT_WORKSTATION
@@ -392,7 +392,7 @@ impl Uname for PlatformInfo {
 
 #[cfg(test)]
 fn is_wow64() -> bool {
-    use winapi::um::processthreadsapi::*;
+    use winapi::um::processthreadsapi::GetCurrentProcess;
 
     let mut result = FALSE;
 
