@@ -26,6 +26,7 @@ use self::winapi::um::winnt::*;
 use self::winapi::um::winver::*;
 use super::Uname;
 use std::borrow::Cow;
+use std::convert::TryFrom;
 use std::ffi::{CStr, OsStr, OsString};
 use std::io;
 use std::iter;
@@ -105,7 +106,9 @@ impl PlatformInfo {
         let mut data: Vec<u16> = vec![0; size as usize];
         unsafe {
             if GetComputerNameExW(ComputerNameDnsHostname, data.as_mut_ptr(), &mut size) != 0 {
-                Ok(String::from_utf16_lossy(&data))
+                Ok(String::from_utf16_lossy(
+                    &data[..usize::try_from(size).unwrap()],
+                ))
             } else {
                 // XXX: should this error or just return localhost?
                 Err(io::Error::last_os_error())
@@ -422,6 +425,15 @@ fn test_sysname() {
     let expected: String = std::env::var("OS").unwrap_or_else(|_| String::from("Windows_NT"));
     println!("sysname = '{}'", info.sysname());
     assert_eq!(info.sysname(), expected);
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_nodename_no_trailing_NUL() {
+    let info = PlatformInfo::new().unwrap();
+    let nodename = info.nodename();
+    let trimmed = nodename.trim().trim_end_matches(|c| c == '\0');
+    assert_eq!(nodename, trimmed);
 }
 
 #[test]
