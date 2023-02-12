@@ -270,21 +270,6 @@ impl Eq for WinApiSystemInfo {}
 
 //===
 
-// WinOsFreeLibrary
-/// Frees the *previously loaded* module (`module_name`), decrementing its reference count.
-/// When the reference count reaches zero, the module is unloaded from the address space of the calling process.
-///
-/// *Returns* bool ~ `false` for fn *failure*; o/w `true`
-///
-/// Note: `module_name`, to minimize chance of collision for similarly-named modules, should be supplied in fully-qualified path form.
-#[allow(dead_code)]
-#[allow(non_snake_case)]
-fn WinOsFreeLibrary<P: AsRef<PathStr>>(module_name: P) -> bool {
-    let module_handle = WinAPI_LoadLibrary(module_name);
-    // finding `module_handle` with `WinAPI_LoadLibrary` increments the per-process reference count, so double free is necessary
-    (WinAPI_FreeLibrary(module_handle) != FALSE) && (WinAPI_FreeLibrary(module_handle) != FALSE)
-}
-
 // WinOSGetComputerName
 /// *Returns* a NetBIOS or DNS name associated with the local computer.
 #[allow(non_snake_case)]
@@ -323,27 +308,6 @@ fn WinOsGetFileVersionInfo<P: AsRef<PathStr>>(
         return Err(Box::new(io::Error::last_os_error()));
     }
     Ok(WinApiFileVersionInfo { data })
-}
-
-// WinOSGetModuleProcAddress
-/// *Returns* the address of an exported function/procedure or variable (`symbol_name`) from the specified library (`module_path`).
-///
-/// The module (referenced by `module_path`) is loaded, if needed, and has it's per-process reference count increased.
-///
-/// Note: `module_name`, to minimize chance of collision for similarly-named modules, should be supplied in fully-qualified path form.
-#[allow(dead_code)]
-#[allow(non_snake_case)]
-fn WinOsGetModuleProcAddress<P: AsRef<PathStr>, Q: AsRef<PathStr>>(
-    module_path: P,
-    symbol_name: Q,
-) -> FARPROC {
-    // NOTE: unless the library is later freed with `WinOsFreeLibrary(...)`, it will stay loaded for the life of the calling process
-    let mut ptr: FARPROC = std::ptr::null_mut();
-    let module = WinAPI_LoadLibrary(module_path);
-    if !module.is_null() {
-        ptr = WinAPI_GetProcAddress(module, symbol_name);
-    }
-    ptr
 }
 
 // WinOSGetSystemDirectory

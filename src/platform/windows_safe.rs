@@ -215,29 +215,6 @@ pub fn WinAPI_GetFileVersionInfoW<P: AsRef<PathStr>>(
     }
 }
 
-// WinAPI_GetModuleHandle
-/// *Returns* a module handle for the specified module (`module_name`).
-/// The module must have been loaded previously by the calling process.
-///
-/// * `module_name` ~ requested library/module <br> Note: full path specification is safer; if only base name and extension is specified, colliding modules may randomly be returned.
-///
-/// *Note:* this function is *not* multithread-safe.
-/// In multithreaded applications, the returned handle could be/become invalid if, in another thread, the requested
-/// module is freed and unloaded.
-///
-/// Wraps WinOS [`Kernel32/GetModuleHandleW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getmodulehandlew).
-#[allow(dead_code)]
-#[allow(non_snake_case)]
-pub fn WinAPI_GetModuleHandle<P: AsRef<PathStr>>(
-    module_name: P, /* used to generate `lptstrFilename: LPCWSTR` */
-) -> HMODULE {
-    // GetModuleHandleW
-    // pub unsafe fn GetModuleHandleW(lpModuleName: LPCWSTR) -> HMODULE
-    // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getmodulehandlew> @@ <https://archive.is/HRusu>
-    let module_name_cws: CWSTR = to_c_wstring(module_name.as_ref());
-    unsafe { GetModuleHandleW(module_name_cws.as_ptr()) }
-}
-
 // WinAPI_GetNativeSystemInfo
 /// *Returns* information (as `SYSTEM_INFO`) about the current system to an application running under WOW64.
 ///
