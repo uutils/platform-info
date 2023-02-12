@@ -19,7 +19,7 @@ use crate::PlatformInfoAPI;
 
 // PlatformInfo
 /// Handles initial retrieval and holds information for the current platform ("unknown" in this case).
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo(());
 
 impl PlatformInfo {

@@ -20,12 +20,10 @@
 #![warn(unused_results)]
 
 use std::borrow::Cow;
-use std::cmp::Ordering;
 use std::error::Error;
 use std::ffi::OsString;
 use std::fmt;
 use std::fmt::{Debug, Formatter};
-use std::hash::{Hash, Hasher};
 
 use crate::PlatformInfoAPI;
 
@@ -33,7 +31,7 @@ use unix_safe::*;
 
 // PlatformInfo
 /// Handles initial retrieval and holds information for the current platform (a Unix-like OS in this case).
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
     // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
     pub utsname: UTSName, /* aka "Unix Time-sharing System Name"; ref: <https://stackoverflow.com/questions/41669397/whats-the-meaning-of-utsname-in-linux> */
@@ -125,7 +123,7 @@ impl PlatformInfoAPI for PlatformInfo {
     }
 */
 // aka "Unix Time-sharing System Name"; ref: <https://stackoverflow.com/questions/41669397/whats-the-meaning-of-utsname-in-linux>
-#[derive(Clone, Copy /* , Debug, PartialEq, Eq, PartialOrd, Ord, Hash */)]
+#[derive(Clone, Copy /* , Debug, PartialEq, Eq */)]
 pub struct UTSName(libc::utsname);
 
 impl Debug for UTSName {
@@ -171,55 +169,6 @@ impl PartialEq for UTSName {
 }
 
 impl Eq for UTSName {}
-
-impl PartialOrd for UTSName {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for UTSName {
-    fn cmp(&self, other: &Self) -> Ordering {
-        let mut comparison = Ordering::Equal; // avoid 'unused-mut' and 'clippy::let-and-return' warnings on MacOS
-        if comparison == Ordering::Equal {
-            comparison = (
-                self.0.sysname,
-                self.0.nodename,
-                self.0.release,
-                self.0.version,
-                self.0.machine,
-            )
-                .cmp(&(
-                    other.0.sysname,
-                    other.0.nodename,
-                    other.0.release,
-                    other.0.version,
-                    other.0.machine,
-                ));
-        };
-        #[cfg(not(target_vendor = "apple" /* or `target_os = "macos"` */))]
-        {
-            if comparison == Ordering::Equal {
-                comparison = (self.0.domainname).cmp(&(other.0.domainname))
-            }
-        }
-        comparison
-    }
-}
-
-impl Hash for UTSName {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.sysname.hash(state);
-        self.0.nodename.hash(state);
-        self.0.release.hash(state);
-        self.0.version.hash(state);
-        self.0.machine.hash(state);
-        #[cfg(not(target_vendor = "apple" /* or `target_os = "macos"` */))]
-        {
-            self.0.domainname.hash(state);
-        }
-    }
-}
 
 //===
 

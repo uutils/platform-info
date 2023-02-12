@@ -31,13 +31,11 @@
 #![warn(unused_results)]
 
 use std::borrow::Cow;
-use std::cmp::Ordering;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::ffi::OsString;
 use std::fmt;
 use std::fmt::{Debug, Formatter};
-use std::hash::{Hash, Hasher};
 use std::io;
 use std::os::windows::ffi::OsStringExt;
 
@@ -57,7 +55,7 @@ use windows_safe::*;
 
 // PlatformInfo
 /// Handles initial retrieval and holds information for the current platform (Windows/WinOS in this case).
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
     pub computer_name: OsString,
     pub system_info: WinApiSystemInfo,
@@ -129,7 +127,7 @@ impl PlatformInfoAPI for PlatformInfo {
 /// Contains information about the current computer system.
 ///
 /// Wraps [SYSTEM_INFO](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info).
-#[derive(Clone, Copy /* , Debug, PartialEq, Eq, PartialOrd, Ord, Hash */)]
+#[derive(Clone, Copy /* , Debug, PartialEq, Eq */)]
 pub struct WinApiSystemInfo(
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info> @@ <https://archive.is/cqbrj>
     SYSTEM_INFO,
@@ -137,7 +135,7 @@ pub struct WinApiSystemInfo(
 
 // WinOsVersionInfo
 /// Contains WinOS version information as [OsString]'s; for more info, see [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT).
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WinOsVersionInfo {
     // ref: [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
     /// "Friendly" OS name (eg, "Windows 10")
@@ -198,7 +196,7 @@ pub mod util {
 
 // MmbrVersion
 /// Contains a version specification as major, minor, build, and revision DWORDs (ie, from *major*.*minor*.*build*.*release* version style).
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct MmbrVersion {
     major: DWORD,
     minor: DWORD,
@@ -210,7 +208,7 @@ struct MmbrVersion {
 /// Contains file version info (`VS_VERSIONINFO`) wrapped as a byte vector (`data`).
 ///
 /// Wraps [VS_VERSIONINFO](https://learn.microsoft.com/en-us/windows/win32/menurc/vs-versioninfo).
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WinApiFileVersionInfo {
     data: Vec<BYTE>,
 }
@@ -269,56 +267,6 @@ impl PartialEq for WinApiSystemInfo {
 }
 
 impl Eq for WinApiSystemInfo {}
-
-impl PartialOrd for WinApiSystemInfo {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for WinApiSystemInfo {
-    fn cmp(&self, other: &Self) -> Ordering {
-        (
-            self.wProcessorArchitecture(),
-            self.0.dwPageSize,
-            self.0.lpMinimumApplicationAddress,
-            self.0.lpMaximumApplicationAddress,
-            self.0.dwActiveProcessorMask,
-            self.0.dwNumberOfProcessors,
-            self.0.dwProcessorType,
-            self.0.dwAllocationGranularity,
-            self.0.wProcessorLevel,
-            self.0.wProcessorRevision,
-        )
-            .cmp(&(
-                other.wProcessorArchitecture(),
-                other.0.dwPageSize,
-                other.0.lpMinimumApplicationAddress,
-                other.0.lpMaximumApplicationAddress,
-                other.0.dwActiveProcessorMask,
-                other.0.dwNumberOfProcessors,
-                other.0.dwProcessorType,
-                other.0.dwAllocationGranularity,
-                other.0.wProcessorLevel,
-                other.0.wProcessorRevision,
-            ))
-    }
-}
-
-impl Hash for WinApiSystemInfo {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.wProcessorArchitecture().hash(state);
-        self.0.dwPageSize.hash(state);
-        self.0.lpMinimumApplicationAddress.hash(state);
-        self.0.lpMaximumApplicationAddress.hash(state);
-        self.0.dwActiveProcessorMask.hash(state);
-        self.0.dwNumberOfProcessors.hash(state);
-        self.0.dwProcessorType.hash(state);
-        self.0.dwAllocationGranularity.hash(state);
-        self.0.wProcessorLevel.hash(state);
-        self.0.wProcessorRevision.hash(state);
-    }
-}
 
 //===
 
