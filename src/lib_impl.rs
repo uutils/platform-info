@@ -1,6 +1,18 @@
-//=== const
+// "plumbing" setup and connections for `lib.rs`
 
-// platform-specific HOST_OS_NAME * ref: [`uname` info](https://en.wikipedia.org/wiki/Uname)
+use std::path::Path;
+use std::path::PathBuf;
+
+/// A slice of a path string
+/// (akin to [`str`]; aka/equivalent to [`Path`]).
+pub type PathStr = Path;
+/// An owned, mutable path string
+/// (akin to [`String`]; aka/equivalent to [`PathBuf`]).
+pub type PathString = PathBuf;
+
+//=== platform-specific const
+
+// HOST_OS_NAME * ref: [`uname` info](https://en.wikipedia.org/wiki/Uname)
 #[cfg(all(target_os = "linux", any(target_env = "gnu", target_env = "")))]
 pub const HOST_OS_NAME: &str = "GNU/Linux";
 #[cfg(all(target_os = "linux", not(any(target_env = "gnu", target_env = ""))))]
