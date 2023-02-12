@@ -29,6 +29,8 @@ use of every feature.
 // spell-checker:ignore (API) nodename osname sysname
 // spell-checker:ignore (uutils) coreutils uutils
 
+#![warn(unused_results)]
+
 use std::borrow::Cow;
 use std::ffi::OsString;
 

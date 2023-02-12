@@ -1,5 +1,7 @@
 // "plumbing" setup and connections for `lib.rs`
 
+#![warn(unused_results)]
+
 use std::path::Path;
 use std::path::PathBuf;
 

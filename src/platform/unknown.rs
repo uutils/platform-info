@@ -9,6 +9,8 @@
 // spell-checker:ignore (names) Ingvar Stepanyan * me@rreverser.com
 // spell-checker:ignore (uutils) coreutils uutils
 
+#![warn(unused_results)]
+
 use std::borrow::Cow;
 use std::error::Error;
 use std::ffi::OsString;

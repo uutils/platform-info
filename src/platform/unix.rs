@@ -17,6 +17,8 @@
 // refs:
 // [Byte-to/from-String Conversions](https://nicholasbishop.github.io/rust-conversions) @@ <https://archive.is/AnDCY>
 
+#![warn(unused_results)]
+
 use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::error::Error;
