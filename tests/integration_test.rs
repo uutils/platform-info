@@ -11,19 +11,72 @@ fn platform() -> Result<(), String> {
         Err(error) => panic!("{}", error),
     };
 
-    let sysname = (uname.sysname()).unwrap_or_else(|os_s| os_s.to_string_lossy());
-    let nodename = (uname.nodename()).unwrap_or_else(|os_s| os_s.to_string_lossy());
-    let release = (uname.release()).unwrap_or_else(|os_s| os_s.to_string_lossy());
-    let version = (uname.version()).unwrap_or_else(|os_s| os_s.to_string_lossy());
-    let machine = (uname.machine()).unwrap_or_else(|os_s| os_s.to_string_lossy());
-    let osname = (uname.osname()).unwrap_or_else(|os_s| os_s.to_string_lossy());
-
-    println!("sysname = [{}]'{}'", sysname.len(), sysname);
-    println!("nodename = [{}]'{}'", nodename.len(), nodename);
-    println!("release = [{}]'{}'", release.len(), release);
-    println!("version = [{}]'{}'", version.len(), version);
-    println!("machine = [{}]'{}'", machine.len(), machine);
-    println!("osname = [{}]'{}'", osname.len(), osname);
+    let sysname = match uname.sysname().to_os_string().into_string() {
+        Ok(s) => {
+            println!("sysname = [{}]'{}'", s.len(), s);
+            s
+        }
+        Err(os_s) => {
+            let s = os_s.to_string_lossy();
+            println!("sysname = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
+            String::from(s)
+        }
+    };
+    let nodename = match uname.nodename().to_os_string().into_string() {
+        Ok(s) => {
+            println!("nodename = [{}]'{}'", s.len(), s);
+            s
+        }
+        Err(os_s) => {
+            let s = os_s.to_string_lossy();
+            println!("nodename = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
+            String::from(s)
+        }
+    };
+    let release = match uname.release().to_os_string().into_string() {
+        Ok(s) => {
+            println!("release = [{}]'{}'", s.len(), s);
+            s
+        }
+        Err(os_s) => {
+            let s = os_s.to_string_lossy();
+            println!("release = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
+            String::from(s)
+        }
+    };
+    let version = match uname.version().to_os_string().into_string() {
+        Ok(s) => {
+            println!("version = [{}]'{}'", s.len(), s);
+            s
+        }
+        Err(os_s) => {
+            let s = os_s.to_string_lossy();
+            println!("version = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
+            String::from(s)
+        }
+    };
+    let machine = match uname.machine().to_os_string().into_string() {
+        Ok(s) => {
+            println!("machine = [{}]'{}'", s.len(), s);
+            s
+        }
+        Err(os_s) => {
+            let s = os_s.to_string_lossy();
+            println!("machine = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
+            String::from(s)
+        }
+    };
+    let osname = match uname.osname().to_os_string().into_string() {
+        Ok(s) => {
+            println!("osname = [{}]'{}'", s.len(), s);
+            s
+        }
+        Err(os_s) => {
+            let s = os_s.to_string_lossy();
+            println!("osname = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
+            String::from(s)
+        }
+    };
 
     assert!(!sysname.is_empty());
     assert!(!nodename.is_empty());
@@ -43,12 +96,12 @@ fn platform_no_invisible_contents() -> Result<(), String> {
         Err(error) => panic!("{}", error),
     };
 
-    let sysname = (uname.sysname()).unwrap_or_else(|os_str| os_str.to_string_lossy());
-    let nodename = (uname.nodename()).unwrap_or_else(|os_str| os_str.to_string_lossy());
-    let release = (uname.release()).unwrap_or_else(|os_str| os_str.to_string_lossy());
-    let version = (uname.version()).unwrap_or_else(|os_str| os_str.to_string_lossy());
-    let machine = (uname.machine()).unwrap_or_else(|os_str| os_str.to_string_lossy());
-    let osname = (uname.osname()).unwrap_or_else(|os_str| os_str.to_string_lossy());
+    let sysname = uname.sysname().to_string_lossy();
+    let nodename = uname.nodename().to_string_lossy();
+    let release = uname.release().to_string_lossy();
+    let version = uname.version().to_string_lossy();
+    let machine = uname.machine().to_string_lossy();
+    let osname = uname.osname().to_string_lossy();
 
     let s = format!("sysname='{sysname}';nodename='{nodename}';release='{release}';version='{version}';machine='{machine}';osname='{osname}'");
     println!("s = [{}]\"{}\"", s.len(), s);

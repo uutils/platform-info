@@ -19,9 +19,8 @@
 
 #![warn(unused_results)]
 
-use std::borrow::Cow;
 use std::error::Error;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 
@@ -62,46 +61,28 @@ impl PlatformInfo {
 }
 
 impl PlatformInfoAPI for PlatformInfo {
-    fn sysname(&self) -> Result<Cow<str>, &OsString> {
-        match self.sysname.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.sysname),
-        }
+    fn sysname(&self) -> &OsStr {
+        &self.sysname
     }
 
-    fn nodename(&self) -> Result<Cow<str>, &OsString> {
-        match self.nodename.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.nodename),
-        }
+    fn nodename(&self) -> &OsStr {
+        &self.nodename
     }
 
-    fn release(&self) -> Result<Cow<str>, &OsString> {
-        match self.release.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.release),
-        }
+    fn release(&self) -> &OsStr {
+        &self.release
     }
 
-    fn version(&self) -> Result<Cow<str>, &OsString> {
-        match self.version.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.version),
-        }
+    fn version(&self) -> &OsStr {
+        &self.version
     }
 
-    fn machine(&self) -> Result<Cow<str>, &OsString> {
-        match self.machine.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.machine),
-        }
+    fn machine(&self) -> &OsStr {
+        &self.machine
     }
 
-    fn osname(&self) -> Result<Cow<str>, &OsString> {
-        match self.osname.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.osname),
-        }
+    fn osname(&self) -> &OsStr {
+        &self.osname
     }
 }
 
@@ -213,15 +194,15 @@ mod unix_safe {
 #[test]
 fn test_osname() {
     let info = PlatformInfo::new().unwrap();
-    let osname = match info.osname() {
-        Ok(str) => {
-            println!("osname = [{}]'{:?}'", str.len(), str);
-            str
+    let osname = match info.osname().to_os_string().into_string() {
+        Ok(s) => {
+            println!("osname = [{}]'{}'", s.len(), s);
+            s
         }
         Err(os_s) => {
             let s = os_s.to_string_lossy();
             println!("osname = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
-            Cow::from(String::from(s))
+            String::from(s)
         }
     };
     assert!(osname.starts_with(crate::HOST_OS_NAME));

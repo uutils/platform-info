@@ -30,10 +30,9 @@
 
 #![warn(unused_results)]
 
-use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::error::Error;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::io;
@@ -61,6 +60,11 @@ pub struct PlatformInfo {
     pub system_info: WinApiSystemInfo,
     pub version_info: WinOsVersionInfo,
     // * private-use fields
+    sysname: OsString,
+    nodename: OsString,
+    release: OsString,
+    version: OsString,
+    machine: OsString,
     osname: OsString,
 }
 
@@ -72,52 +76,51 @@ impl PlatformInfo {
         let system_info = WinApiSystemInfo(WinAPI_GetNativeSystemInfo());
         let version_info = os_version_info()?;
 
+        let sysname = determine_sysname();
+        let nodename = computer_name.clone();
+        let release = version_info.release.clone();
+        let version = version_info.version.clone();
+        let machine = determine_machine(&system_info);
         let osname = determine_osname(&version_info);
 
         Ok(Self {
             computer_name,
             system_info,
             version_info,
+            /* private use */
+            sysname,
+            nodename,
+            release,
+            version,
+            machine,
             osname,
         })
     }
 }
 
 impl PlatformInfoAPI for PlatformInfo {
-    fn sysname(&self) -> Result<Cow<str>, &OsString> {
-        Ok(Cow::from(determine_sysname()))
+    fn sysname(&self) -> &OsStr {
+        &self.sysname
     }
 
-    fn nodename(&self) -> Result<Cow<str>, &OsString> {
-        match self.computer_name.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.computer_name),
-        }
+    fn nodename(&self) -> &OsStr {
+        &self.nodename
     }
 
-    fn release(&self) -> Result<Cow<str>, &OsString> {
-        match self.version_info.release.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.version_info.release),
-        }
+    fn release(&self) -> &OsStr {
+        &self.release
     }
 
-    fn version(&self) -> Result<Cow<str>, &OsString> {
-        match self.version_info.version.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.version_info.version),
-        }
+    fn version(&self) -> &OsStr {
+        &self.version
     }
 
-    fn machine(&self) -> Result<Cow<str>, &OsString> {
-        Ok(Cow::from(determine_machine(&self.system_info)))
+    fn machine(&self) -> &OsStr {
+        &self.machine
     }
 
-    fn osname(&self) -> Result<Cow<str>, &OsString> {
-        match self.osname.to_str() {
-            Some(str) => Ok(Cow::from(str)),
-            None => Err(&self.osname),
-        }
+    fn osname(&self) -> &OsStr {
+        &self.osname
     }
 }
 
@@ -476,7 +479,7 @@ fn winos_name(
 
 //===
 
-fn determine_machine(system_info: &WinApiSystemInfo) -> String {
+fn determine_machine(system_info: &WinApiSystemInfo) -> OsString {
     let arch = system_info.wProcessorArchitecture();
 
     // ref: [SYSTEM_INFO structure](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) @@ <https://archive.is/cqbrj>
@@ -501,7 +504,7 @@ fn determine_machine(system_info: &WinApiSystemInfo) -> String {
         _ => "unknown",
     };
 
-    String::from(arch_str)
+    OsString::from(arch_str)
 }
 
 fn determine_osname(version_info: &WinOsVersionInfo) -> OsString {
@@ -514,10 +517,10 @@ fn determine_osname(version_info: &WinOsVersionInfo) -> OsString {
     osname
 }
 
-fn determine_sysname() -> String {
+fn determine_sysname() -> OsString {
     // As of 2023-02, possible Windows kernels == [ "Windows_9x", "Windows_NT" ]
     // * "Windows_9x" hit end-of-service-life on 2006-07-11 (ref: [Windows_9x](https://en.wikipedia.org/wiki/Windows_9x) @@ <https://archive.is/wip/K6fhN>)
-    String::from("Windows_NT") // compatible with `busybox` and MS (from std::env::var("OS"))
+    OsString::from("Windows_NT") // compatible with `busybox` and MS (from std::env::var("OS"))
 }
 
 //=== Tests
@@ -525,19 +528,8 @@ fn determine_sysname() -> String {
 #[test]
 fn test_sysname() {
     let info = PlatformInfo::new().unwrap();
-    let sysname = match info.sysname() {
-        Ok(str) => {
-            println!("sysname = [{}]'{:?}'", str.len(), str);
-            str
-        }
-        Err(os_s) => {
-            let s = os_s.to_string_lossy();
-            println!("sysname = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
-            Cow::from(String::from(s))
-        }
-    };
-
-    let expected = std::env::var("OS").unwrap_or_else(|_| String::from("Windows_NT"));
+    let sysname = info.sysname().to_os_string();
+    let expected = std::env::var_os("OS").unwrap_or_else(|| OsString::from("Windows_NT"));
     assert_eq!(sysname, expected);
 }
 
@@ -545,15 +537,15 @@ fn test_sysname() {
 #[allow(non_snake_case)]
 fn test_nodename_no_trailing_NUL() {
     let info = PlatformInfo::new().unwrap();
-    let nodename = match info.nodename() {
-        Ok(str) => {
-            println!("nodename = [{}]'{:?}'", str.len(), str);
-            str
+    let nodename = match info.nodename().to_os_string().into_string() {
+        Ok(s) => {
+            println!("nodename = [{}]'{}'", s.len(), s);
+            s
         }
         Err(os_s) => {
             let s = os_s.to_string_lossy();
             println!("nodename = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
-            Cow::from(String::from(s))
+            String::from(s)
         }
     };
     let trimmed = nodename.trim().trim_end_matches(|c| c == '\0');
@@ -588,15 +580,15 @@ fn test_machine() {
     println!("target={:#?}", target);
 
     let info = PlatformInfo::new().unwrap();
-    let machine = match info.machine() {
-        Ok(str) => {
-            println!("machine = [{}]'{:?}'", str.len(), str);
-            str
+    let machine = match info.machine().to_os_string().into_string() {
+        Ok(s) => {
+            println!("machine = [{}]'{:?}'", s.len(), s);
+            s
         }
         Err(os_s) => {
             let s = os_s.to_string_lossy();
-            println!("machine = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
-            Cow::from(String::from(s))
+            println!("machine = [{}]'{:?}' => '{:?}'", os_s.len(), os_s, s);
+            String::from(s)
         }
     };
 
@@ -606,15 +598,15 @@ fn test_machine() {
 #[test]
 fn test_osname() {
     let info = PlatformInfo::new().unwrap();
-    let osname = match info.osname() {
-        Ok(str) => {
-            println!("osname = [{}]'{:?}'", str.len(), str);
-            str
+    let osname = match info.osname().to_os_string().into_string() {
+        Ok(s) => {
+            println!("osname = [{}]'{:?}'", s.len(), s);
+            s
         }
         Err(os_s) => {
             let s = os_s.to_string_lossy();
-            println!("osname = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
-            Cow::from(String::from(s))
+            println!("osname = [{}]'{:?}' => '{:?}'", os_s.len(), os_s, s);
+            String::from(s)
         }
     };
     assert!(osname.starts_with(crate::HOST_OS_NAME));

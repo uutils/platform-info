@@ -31,8 +31,7 @@ use of every feature.
 
 #![warn(unused_results)]
 
-use std::borrow::Cow;
-use std::ffi::OsString;
+use std::ffi::OsStr;
 
 mod lib_impl;
 pub use lib_impl::*;
@@ -41,20 +40,20 @@ pub use lib_impl::*;
 // ref: <https://www.gnu.org/software/libc/manual/html_node/Platform-Type.html> @@ <https://archive.is/YjjWJ>
 pub trait PlatformInfoAPI {
     /// The name of this implementation of the operating system.
-    fn sysname(&self) -> Result<Cow<str>, &OsString>;
+    fn sysname(&self) -> &OsStr;
 
     /// The node name (network node hostname) of this machine.
-    fn nodename(&self) -> Result<Cow<str>, &OsString>;
+    fn nodename(&self) -> &OsStr;
 
     /// The current release level of the operating system.
-    fn release(&self) -> Result<Cow<str>, &OsString>;
+    fn release(&self) -> &OsStr;
 
     /// The current version level of the current release.
-    fn version(&self) -> Result<Cow<str>, &OsString>;
+    fn version(&self) -> &OsStr;
 
     /// The name of the current system's hardware.
-    fn machine(&self) -> Result<Cow<str>, &OsString>;
+    fn machine(&self) -> &OsStr;
 
     /// The name of the current OS.
-    fn osname(&self) -> Result<Cow<str>, &OsString>;
+    fn osname(&self) -> &OsStr;
 }

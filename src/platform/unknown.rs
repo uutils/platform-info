@@ -11,46 +11,49 @@
 
 #![warn(unused_results)]
 
-use std::borrow::Cow;
 use std::error::Error;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 
 use crate::PlatformInfoAPI;
 
 // PlatformInfo
 /// Handles initial retrieval and holds information for the current platform ("unknown" in this case).
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PlatformInfo(());
+pub struct PlatformInfo {
+    unknown: OsString,
+}
 
 impl PlatformInfo {
     pub fn new() -> Result<Self, Box<dyn Error>> {
-        Ok(Self(()))
+        Ok(Self {
+            unknown: OsString::from("unknown"),
+        })
     }
 }
 
 impl PlatformInfoAPI for PlatformInfo {
-    fn sysname(&self) -> Result<Cow<str>, &OsString> {
-        Ok(Cow::from("unknown"))
+    fn sysname(&self) -> &OsStr {
+        &self.unknown
     }
 
-    fn nodename(&self) -> Result<Cow<str>, &OsString> {
-        Ok(Cow::from("unknown"))
+    fn nodename(&self) -> &OsStr {
+        &self.unknown
     }
 
-    fn release(&self) -> Result<Cow<str>, &OsString> {
-        Ok(Cow::from("unknown"))
+    fn release(&self) -> &OsStr {
+        &self.unknown
     }
 
-    fn version(&self) -> Result<Cow<str>, &OsString> {
-        Ok(Cow::from("unknown"))
+    fn version(&self) -> &OsStr {
+        &self.unknown
     }
 
-    fn machine(&self) -> Result<Cow<str>, &OsString> {
-        Ok(Cow::from("unknown"))
+    fn machine(&self) -> &OsStr {
+        &self.unknown
     }
 
-    fn osname(&self) -> Result<Cow<str>, &OsString> {
-        Ok(Cow::from("unknown"))
+    fn osname(&self) -> &OsStr {
+        &self.unknown
     }
 }
 
@@ -58,10 +61,10 @@ impl PlatformInfoAPI for PlatformInfo {
 fn test_unknown() {
     let platform_info = PlatformInfo::new().unwrap();
 
-    assert_eq!(platform_info.sysname().unwrap(), "unknown");
-    assert_eq!(platform_info.nodename().unwrap(), "unknown");
-    assert_eq!(platform_info.release().unwrap(), "unknown");
-    assert_eq!(platform_info.version().unwrap(), "unknown");
-    assert_eq!(platform_info.machine().unwrap(), "unknown");
-    assert_eq!(platform_info.osname().unwrap(), "unknown");
+    assert_eq!(platform_info.sysname().to_string_lossy(), "unknown");
+    assert_eq!(platform_info.nodename().to_string_lossy(), "unknown");
+    assert_eq!(platform_info.release().to_string_lossy(), "unknown");
+    assert_eq!(platform_info.version().to_string_lossy(), "unknown");
+    assert_eq!(platform_info.machine().to_string_lossy(), "unknown");
+    assert_eq!(platform_info.osname().to_string_lossy(), "unknown");
 }

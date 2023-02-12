@@ -24,12 +24,12 @@ fn main() {
     let info = PlatformInfo::new().unwrap();
     // println!("info={:#?}", info);
 
-    println!("{}", (info.sysname()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
-    println!("{}", (info.nodename()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
-    println!("{}", (info.release()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
-    println!("{}", (info.version()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
-    println!("{}", (info.machine()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
-    println!("{}", (info.osname()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
+    println!("{}", info.sysname().to_string_lossy());
+    println!("{}", info.nodename().to_string_lossy());
+    println!("{}", info.release().to_string_lossy());
+    println!("{}", info.version().to_string_lossy());
+    println!("{}", info.machine().to_string_lossy());
+    println!("{}", info.osname().to_string_lossy());
 }
 ```
 
