@@ -1,35 +1,39 @@
-platform-info
-=============
+# platform-info
+
+<!-- spell-checker:ignore (API) nodename osname sysname (rust) println -->
 
 [![Crates.io](https://img.shields.io/crates/v/platform-info.svg)](https://crates.io/crates/platform-info)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CodeCov](https://codecov.io/gh/uutils/platform-info/branch/main/graph/badge.svg)](https://codecov.io/gh/uutils/platform-info/tree/main)
 
-A simple cross-platform way to get information about the currently running
-system.
+A simple cross-platform way to get information about the currently running system.
 
-Example
--------
+## Example
 
 This simple example:
 
 ```rust
-// `cargo run --example ex` (executes this example)
+// examples/ex.rs
+// * use `cargo run --example ex` to execute this example
+
+// spell-checker:ignore (API) nodename osname sysname
 
 use platform_info::*;
 
 fn main() {
-    let uname = PlatformInfo::new().unwrap();
-    println!("{}", uname.sysname());
-    println!("{}", uname.nodename());
-    println!("{}", uname.release());
-    println!("{}", uname.version());
-    println!("{}", uname.machine());
-    println!("{}", uname.osname());
+    let info = PlatformInfo::new().unwrap();
+    // println!("info={:#?}", info);
+
+    println!("{}", (info.sysname()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
+    println!("{}", (info.nodename()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
+    println!("{}", (info.release()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
+    println!("{}", (info.version()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
+    println!("{}", (info.machine()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
+    println!("{}", (info.osname()).unwrap_or_else(|os_s| os_s.to_string_lossy()));
 }
 ```
 
-should return something like:
+should display something like:
 
 ```text
 Linux
@@ -40,9 +44,8 @@ x86_64
 GNU/Linux
 ```
 
-Use `cargo run --example ex` to execute this code.
+> Using `cargo run --example ex` will build and execute this [example code](examples/ex.rs).
 
-License
--------
+## License
 
-`platform-info` is licensed under the MIT License - see the LICENSE file for details.
+`platform-info` is licensed under the [MIT License](LICENSE).
