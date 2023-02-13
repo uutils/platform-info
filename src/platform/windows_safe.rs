@@ -536,3 +536,27 @@ pub fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, Box<dyn Error>> {
 }
 
 //#endregion (unsafe code)
+
+//=== Tests
+
+#[test]
+fn structure_clone() {
+    let ffi = VS_FIXEDFILEINFO {
+        dwSignature: 0,
+        dwStrucVersion: 0,
+        dwFileVersionMS: 0,
+        dwFileVersionLS: 0,
+        dwProductVersionMS: 0,
+        dwProductVersionLS: 0,
+        dwFileFlagsMask: 0,
+        dwFileFlags: 0,
+        dwFileOS: 0,
+        dwFileType: 0,
+        dwFileSubtype: 0,
+        dwFileDateMS: 0,
+        dwFileDateLS: 0,
+    };
+    println!("{:?}", ffi);
+    let ffi_copy = ffi.clone();
+    assert_eq!(ffi_copy, ffi);
+}

@@ -194,16 +194,14 @@ mod unix_safe {
 #[test]
 fn test_osname() {
     let info = PlatformInfo::new().unwrap();
-    let osname = match info.osname().to_os_string().into_string() {
-        Ok(s) => {
-            println!("osname = [{}]'{}'", s.len(), s);
-            s
-        }
-        Err(os_s) => {
-            let s = os_s.to_string_lossy();
-            println!("osname = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
-            String::from(s)
-        }
-    };
+    let osname = info.osname().to_string_lossy();
     assert!(osname.starts_with(crate::HOST_OS_NAME));
+}
+
+#[test]
+fn structure_clone() {
+    let info = PlatformInfo::new().unwrap();
+    println!("{:?}", info);
+    let info_copy = info.clone();
+    assert_eq!(info_copy, info);
 }

@@ -68,3 +68,11 @@ fn test_unknown() {
     assert_eq!(platform_info.machine().to_string_lossy(), "unknown");
     assert_eq!(platform_info.osname().to_string_lossy(), "unknown");
 }
+
+#[test]
+fn structure_clone() {
+    let info = PlatformInfo::new().unwrap();
+    println!("{:?}", info);
+    let info_copy = info.clone();
+    assert_eq!(info_copy, info);
+}

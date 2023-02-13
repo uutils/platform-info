@@ -530,6 +530,7 @@ fn test_sysname() {
     let info = PlatformInfo::new().unwrap();
     let sysname = info.sysname().to_os_string();
     let expected = std::env::var_os("OS").unwrap_or_else(|| OsString::from("Windows_NT"));
+    println!("sysname=[{}]'{:#?}'", sysname.len(), sysname);
     assert_eq!(sysname, expected);
 }
 
@@ -537,18 +538,9 @@ fn test_sysname() {
 #[allow(non_snake_case)]
 fn test_nodename_no_trailing_NUL() {
     let info = PlatformInfo::new().unwrap();
-    let nodename = match info.nodename().to_os_string().into_string() {
-        Ok(s) => {
-            println!("nodename = [{}]'{}'", s.len(), s);
-            s
-        }
-        Err(os_s) => {
-            let s = os_s.to_string_lossy();
-            println!("nodename = [{}]'{:?}' => '{}'", os_s.len(), os_s, s);
-            String::from(s)
-        }
-    };
+    let nodename = info.nodename().to_string_lossy();
     let trimmed = nodename.trim().trim_end_matches(|c| c == '\0');
+    println!("nodename=[{}]'{}'", nodename.len(), nodename);
     assert_eq!(nodename, trimmed);
 }
 
@@ -580,17 +572,8 @@ fn test_machine() {
     println!("target={:#?}", target);
 
     let info = PlatformInfo::new().unwrap();
-    let machine = match info.machine().to_os_string().into_string() {
-        Ok(s) => {
-            println!("machine = [{}]'{:?}'", s.len(), s);
-            s
-        }
-        Err(os_s) => {
-            let s = os_s.to_string_lossy();
-            println!("machine = [{}]'{:?}' => '{:?}'", os_s.len(), os_s, s);
-            String::from(s)
-        }
-    };
+    let machine = info.machine().to_string_lossy();
+    println!("machine=[{}]'{}'", machine.len(), machine);
 
     assert!(target.contains(&&machine[..]));
 }
@@ -598,17 +581,8 @@ fn test_machine() {
 #[test]
 fn test_osname() {
     let info = PlatformInfo::new().unwrap();
-    let osname = match info.osname().to_os_string().into_string() {
-        Ok(s) => {
-            println!("osname = [{}]'{:?}'", s.len(), s);
-            s
-        }
-        Err(os_s) => {
-            let s = os_s.to_string_lossy();
-            println!("osname = [{}]'{:?}' => '{:?}'", os_s.len(), os_s, s);
-            String::from(s)
-        }
-    };
+    let osname = info.osname().to_string_lossy();
+    println!("osname=[{}]'{}'", osname.len(), osname);
     assert!(osname.starts_with(crate::HOST_OS_NAME));
 }
 
@@ -750,4 +724,29 @@ fn test_known_winos_names() {
         winos_name(10, 0, 22621, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
         "Windows 11"
     );
+}
+
+#[test]
+fn structure_clone() {
+    let info = PlatformInfo::new().unwrap();
+    println!("{:?}", info);
+    let info_copy = info.clone();
+    assert_eq!(info_copy, info);
+
+    let mmbr = MmbrVersion {
+        major: 1,
+        minor: 2,
+        build: 3,
+        release: 4,
+    };
+    println!("{:?}", mmbr);
+    let mmbr_copy = mmbr.clone();
+    assert_eq!(mmbr_copy, mmbr);
+
+    let fvi = WinApiFileVersionInfo {
+        data: vec![1, 2, 3, 4],
+    };
+    println!("{:?}", fvi);
+    let fvi_copy = fvi.clone();
+    assert_eq!(fvi_copy, fvi);
 }
