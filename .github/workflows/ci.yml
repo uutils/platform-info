@@ -1,5 +1,5 @@
-# spell-checker:ignore (rust) clippy rustfmt rustup RUSTC RUSTFLAGS Zpanic Cpanic RUSTDOCFLAGS Ccodegen Coverflow
-# spell-checker:ignore (bash) alnum esac (jargon) maint (utils) codecov grcov lcov (vars) tempfile () ntempfile
+# spell-checker:ignore (rust) clippy rustfmt rustup RUSTC RUSTFLAGS Zpanic Cpanic RUSTDOCFLAGS Ccodegen Coverflow profraw
+# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov (vars) tempfile () ntempfile
 
 on: [push, pull_request]
 
@@ -97,16 +97,16 @@ jobs:
           - { os: windows-latest, features: windows }
     steps:
       - uses: actions/checkout@v3
-      - name: Initialize workflow variables
+      - name: Initialize/setup workflow
         id: vars
         shell: bash
         run: |
-          ## VARs setup
+          ## VARs and paths setup
           outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
           # toolchain
           TOOLCHAIN="nightly" ## default to "nightly" toolchain (required for certain required unstable compiler flags) ## !maint: refactor when stable channel has needed support
           # * specify gnu-type TOOLCHAIN for windows; `grcov` requires gnu-style code coverage data files
-          case ${{ matrix.job.os }} in windows-*) TOOLCHAIN="$TOOLCHAIN-x86_64-pc-windows-gnu" ;; esac;
+          case ${{ matrix.job.os }} in windows-*) TOOLCHAIN="$TOOLCHAIN-x86_64-pc-windows-msvc" ;; esac;
           # * use requested TOOLCHAIN if specified
           if [ -n "${{ matrix.job.toolchain }}" ]; then TOOLCHAIN="${{ matrix.job.toolchain }}" ; fi
           outputs TOOLCHAIN
@@ -116,6 +116,13 @@ jobs:
           # * CODECOV_FLAGS
           CODECOV_FLAGS=$( echo "${{ matrix.job.os }}" | sed 's/[^[:alnum:]]/_/g' )
           outputs CODECOV_FLAGS
+          # * code coverage
+          COVERAGE_REPORT_DIR="target/debug/coverage"
+          PROFILES_DIR="${COVERAGE_REPORT_DIR}/profiles"
+          mkdir -p "${COVERAGE_REPORT_DIR}" "${PROFILES_DIR}"
+          outputs COVERAGE_REPORT_DIR PROFILES_DIR
+          LLVM_PROFILE_FILE="${PROFILES_DIR}/profile-%p-%m.profraw"
+          outputs LLVM_PROFILE_FILE
       - name: Install `rust` toolchain
         shell: bash
         env:
@@ -124,31 +131,49 @@ jobs:
           ## Install `rust` toolchain
           rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
           rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
+          rustup component add --toolchain ${TOOLCHAIN} llvm-tools
           rustup default ${TOOLCHAIN}
       - run: cargo install grcov
       - name: Test
         shell: bash
         env:
           CARGO_INCREMENTAL: '0'
+          LLVM_PROFILE_FILE: ${{ steps.vars.outputs.LLVM_PROFILE_FILE }}
           RUSTC_WRAPPER: ''
-          RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort'
-          RUSTDOCFLAGS: '-Cpanic=abort'
+          RUSTFLAGS: '-C instrument-coverage'
+          RUSTDOCFLAGS: ''
         run: |
           ## Test
           cargo test ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --no-fail-fast
+      - name: Test examples
+        shell: bash
+        env:
+          CARGO_INCREMENTAL: '0'
+          LLVM_PROFILE_FILE: ${{ steps.vars.outputs.LLVM_PROFILE_FILE }}
+          RUSTC_WRAPPER: ''
+          RUSTFLAGS: '-C instrument-coverage'
+          RUSTDOCFLAGS: ''
+        run: |
+          ## Test
+          cargo test ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --examples --no-fail-fast
       - name: Generate coverage data (via `grcov`)
         id: coverage
         shell: bash
         run: |
           ## Generate coverage data
-          COVERAGE_REPORT_DIR="target/debug"
+          outputs() { step_id="${{ github.action }}"; for var in "$@" ; do echo steps.${step_id}.outputs.${var}="${!var}"; echo "${var}=${!var}" >> $GITHUB_OUTPUT; done; }
+          #
+          COVERAGE_REPORT_DIR='${{ steps.vars.outputs.COVERAGE_REPORT_DIR }}'
+          LLVM_PROFILE_FILE='${{ steps.vars.outputs.LLVM_PROFILE_FILE }}'
+          PROFILES_DIR='${{ steps.vars.outputs.PROFILES_DIR }}'
+          BINARY_PATH='target/debug'
           COVERAGE_REPORT_FILE="${COVERAGE_REPORT_DIR}/lcov.info"
-          mkdir -p "${COVERAGE_REPORT_DIR}"
           # display coverage files
-          grcov . --output-type files --ignore build.rs --ignore "vendor/*" --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()" | sort --unique
+          grcov . --binary-path "${BINARY_PATH}" --source-dir . --output-type files --ignore build.rs --ignore "examples/*" --ignore "vendor/*" --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()" | sort --unique
           # generate coverage report
-          grcov . --output-type lcov --output-path "${COVERAGE_REPORT_FILE}" --branch --ignore build.rs --ignore "vendor/*" --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()"
-          echo "report=${COVERAGE_REPORT_FILE}" >> $GITHUB_OUTPUT
+          grcov . --binary-path "${BINARY_PATH}" --source-dir . --output-type lcov --output-path "${COVERAGE_REPORT_FILE}" --ignore build.rs --ignore "examples/*" --ignore "vendor/*" --ignore "/*" --ignore "[a-zA-Z]:/*" --excl-br-line "^\s*((debug_)?assert(_eq|_ne)?!|#\[derive\()"
+          report=${COVERAGE_REPORT_FILE}
+          outputs report
       - name: Upload coverage results (to Codecov.io)
         uses: codecov/codecov-action@v3
         # if: steps.vars.outputs.HAS_CODECOV_TOKEN
