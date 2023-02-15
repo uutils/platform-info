@@ -724,6 +724,23 @@ fn test_known_winos_names() {
         winos_name(10, 0, 22621, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
         "Windows 11"
     );
+    // test unmatched versions (triggers `_` matches and returns a `default_name`)
+    assert_eq!(
+        winos_name(5, 9, 3790, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 5.9"
+    );
+    assert_eq!(
+        winos_name(5, 9, 3790, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 5.9"
+    );
+    assert_eq!(
+        winos_name(6, 9, 9600, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 6.9"
+    );
+    assert_eq!(
+        winos_name(6, 9, 9600, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 6.9"
+    );
 }
 
 #[test]
