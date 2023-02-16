@@ -1,67 +1,86 @@
 # spell-checker:ignore (rust) clippy rustfmt rustup RUSTC RUSTFLAGS Zpanic Cpanic RUSTDOCFLAGS Ccodegen Coverflow profraw
-# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov (vars) tempfile () ntempfile
+# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov sccache (vars) tempfile () ntempfile uutils
+# spell-checker:ignore (people) dtolnay ; Swatinem
 
 on: [push, pull_request]
 
-name: Basic CI
+name: CI
+
+env:
+  PROJECT_NAME: platform-info
+  PROJECT_DESC: 'Cross-platform host machine info'
+  PROJECT_AUTH: 'uutils'
+  # * `rust` caching configuration
+  RUSTC_WRAPPER: 'sccache'
+  SCCACHE_GHA_ENABLED: 'true'
 
 jobs:
-  fmt:
-    name: cargo fmt
+  style_format:
+    name: Style/format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install `rust` toolchain
-        shell: bash
-        env:
-          TOOLCHAIN: stable
-        run: |
-          ## Install `rust` toolchain
-          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
-          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
-          rustup default ${TOOLCHAIN}
-      - run: rustup component add rustfmt
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.3
       - run: cargo fmt --all -- --check
 
-  clippy:
-    name: cargo clippy
+  style_lint:
+    name: Style/lint
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - name: Install `rust` toolchain
-        shell: bash
-        env:
-          TOOLCHAIN: stable
-        run: |
-          ## Install `rust` toolchain
-          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
-          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
-          rustup default ${TOOLCHAIN}
-      - run: rustup component add clippy
-      - run: cargo clippy -- -D warnings
-      - run: cargo clippy --examples -- -D warnings
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.3
+      - run: cargo clippy --all-targets -- -D warnings
 
   test:
-    name: cargo test
+    name: Build/Test
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v3
-      - name: Install `rust` toolchain
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Build/Test Info
         shell: bash
-        env:
-          TOOLCHAIN: stable
         run: |
-          ## Install `rust` toolchain
-          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
-          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
-          rustup default ${TOOLCHAIN}
-      - run: cargo test
+          ## Build/Test Info
+          # repo/commit info
+          echo "## repo/commit"
+          echo GITHUB_REPOSITORY=${GITHUB_REPOSITORY}
+          echo GITHUB_REF=${GITHUB_REF}
+          echo GITHUB_SHA=${GITHUB_SHA}
+          # environment
+          echo "## environment"
+          echo "CI='${CI}'"
+          # tooling info display
+          echo "## tooling"
+          which gcc >/dev/null 2>&1 && (gcc --version | head -1) || true
+          rustup -V 2>/dev/null
+          rustup show active-toolchain
+          cargo -V
+          rustc -V
+          cargo tree -V
+          # dependencies
+          echo "## crate dependency list"
+          # * note: for applications, use `--locked` for `cargo fetch`` and `cargo tree`) and commit *Cargo.lock*
+          cargo fetch --quiet
+          cargo tree --edges=no-dev --prefix=none --workspace | grep -vE "\(.*[/\\]${GITHUB_REPOSITORY##*/}\)" | sort --unique
+      - run: cargo test --all-features -- --test-threads 1
         env:
           RUST_BACKTRACE: '1'
 
@@ -105,16 +124,12 @@ jobs:
           outputs COVERAGE_REPORT_DIR PROFILES_DIR
           LLVM_PROFILE_FILE="${PROFILES_DIR}/profile-%p-%m.profraw"
           outputs LLVM_PROFILE_FILE
-      - name: Install `rust` toolchain
-        shell: bash
-        env:
-          TOOLCHAIN: ${{ steps.vars.outputs.TOOLCHAIN }}
-        run: |
-          ## Install `rust` toolchain
-          rm -f "${HOME}/.cargo/bin/"{rustfmt,cargo-fmt}
-          rustup toolchain install ${TOOLCHAIN} -c rustfmt --profile minimal
-          rustup component add --toolchain ${TOOLCHAIN} llvm-tools
-          rustup default ${TOOLCHAIN}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.vars.outputs.TOOLCHAIN }}
+          components: llvm-tools
+      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.3
       - run: cargo install grcov
       - name: Test
         shell: bash
@@ -126,7 +141,7 @@ jobs:
           RUSTDOCFLAGS: ''
         run: |
           ## Test
-          cargo test ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --no-fail-fast
+          cargo test ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --no-fail-fast -- --test-threads 1
       - name: Test examples
         shell: bash
         env:
@@ -136,8 +151,8 @@ jobs:
           RUSTFLAGS: '-C instrument-coverage'
           RUSTDOCFLAGS: ''
         run: |
-          ## Test
-          cargo test ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --examples --no-fail-fast
+          ## Test examples
+          cargo test ${{ steps.vars.outputs.CARGO_FEATURES_OPTION }} --examples --no-fail-fast -- --test-threads 1
       - name: Generate coverage data (via `grcov`)
         id: coverage
         shell: bash
