@@ -92,9 +92,9 @@ jobs:
       fail-fast: true
       matrix:
         job:
-          - { os: ubuntu-latest, features: unix }
-          - { os: macos-latest, features: macos }
-          - { os: windows-latest, features: windows }
+          - { os: ubuntu-latest }
+          - { os: macos-latest }
+          - { os: windows-latest }
     steps:
       - uses: actions/checkout@v3
       - name: Initialize/setup workflow
@@ -112,7 +112,9 @@ jobs:
           outputs TOOLCHAIN
           # target-specific options
           # * CARGO_FEATURES_OPTION
-          CARGO_FEATURES_OPTION='--all -- --check' ;  ## default to '--all-features' for code coverage
+          CARGO_FEATURES_OPTION='--all-features' ;  ## default to '--all-features' for code coverage
+          if [ -n "${{ matrix.job.features }}" ]; then CARGO_FEATURES_OPTION='--features=${{ matrix.job.features }}' ; fi
+          outputs CARGO_FEATURES_OPTION
           # * CODECOV_FLAGS
           CODECOV_FLAGS=$( echo "${{ matrix.job.os }}" | sed 's/[^[:alnum:]]/_/g' )
           outputs CODECOV_FLAGS
