@@ -6,49 +6,52 @@ use platform_info::*;
 
 #[test]
 fn platform() -> Result<(), String> {
-    let uname = PlatformInfo::new().unwrap();
+    let info = PlatformInfo::new().unwrap();
 
-    let sysname = uname.sysname();
-    let nodename = uname.nodename();
-    let release = uname.release();
-    let version = uname.version();
-    let machine = uname.machine();
-    let osname = uname.osname();
+    let sysname = info.sysname().to_string_lossy();
+    let nodename = info.nodename().to_string_lossy();
+    let release = info.release().to_string_lossy();
+    let version = info.version().to_string_lossy();
+    let machine = info.machine().to_string_lossy();
+    let osname = info.osname().to_string_lossy();
 
-    println!("sysname = [{}]'{}'", sysname.len(), sysname);
-    println!("nodename = [{}]'{}'", nodename.len(), nodename);
-    println!("release = [{}]'{}'", release.len(), release);
-    println!("version = [{}]'{}'", version.len(), version);
-    println!("machine = [{}]'{}'", machine.len(), machine);
-    println!("osname = [{}]'{}'", osname.len(), osname);
+    assert!(!sysname.is_empty());
+    assert!(!nodename.is_empty());
+    assert!(!release.is_empty());
+    assert!(!version.is_empty());
+    assert!(!machine.is_empty());
+    assert!(!osname.is_empty());
 
-    assert!(!uname.sysname().is_empty());
-    assert!(!uname.nodename().is_empty());
-    assert!(!uname.release().is_empty());
-    assert!(!uname.version().is_empty());
-    assert!(!uname.machine().is_empty());
-    assert!(!uname.osname().is_empty());
-
+    // assert!(false);
     Ok(())
 }
 
 #[test]
 fn platform_no_invisible_contents() -> Result<(), String> {
-    let uname = PlatformInfo::new().unwrap();
+    let info = PlatformInfo::new().unwrap();
 
-    let sysname = uname.sysname();
-    let nodename = uname.nodename();
-    let release = uname.release();
-    let version = uname.version();
-    let machine = uname.machine();
-    let osname = uname.osname();
+    let sysname = info.sysname().to_string_lossy();
+    let nodename = info.nodename().to_string_lossy();
+    let release = info.release().to_string_lossy();
+    let version = info.version().to_string_lossy();
+    let machine = info.machine().to_string_lossy();
+    let osname = info.osname().to_string_lossy();
 
-    let s = format!("sysname='{sysname}';nodename='{nodename}';release='{release}';version='{version}';machine='{machine}';osname={osname}");
+    let s = format!("sysname='{sysname}';nodename='{nodename}';release='{release}';version='{version}';machine='{machine}';osname='{osname}'");
     println!("s = [{}]\"{}\"", s.len(), s);
 
     // let re = regex::Regex::new("[^[[:print:]]]").unwrap(); // matches invisible (and emojis)
     let re = regex::Regex::new("[^[[:print:]]\\p{Other_Symbol}]").unwrap(); // matches invisible only (not emojis)
     assert_eq!(re.find(&s), None);
 
+    Ok(())
+}
+
+#[test]
+fn platform_clone() -> Result<(), String> {
+    let info = PlatformInfo::new().unwrap();
+    let info_copy = info.clone();
+    println!("{:?}", info);
+    assert_eq!(info_copy, info);
     Ok(())
 }

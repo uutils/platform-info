@@ -19,66 +19,41 @@ project is as simple as adding `platform-info` to your project's `Cargo.toml`, l
 
 ```toml
 [dependencies]
-platform-info = "1"
+platform-info = "2"
 ```
 
 To see specific usage details, look at the `uname` utility linked above as it makes
 use of every feature.
 */
 
-pub use self::sys::*;
+// spell-checker:ignore (API) nodename osname sysname
+// spell-checker:ignore (uutils) coreutils uutils
 
-use std::borrow::Cow;
+#![warn(unused_results)]
 
-#[cfg(unix)]
-#[path = "unix.rs"]
-mod sys;
-#[cfg(windows)]
-#[path = "windows.rs"]
-mod sys;
-#[cfg(not(any(unix, windows)))]
-#[path = "unknown.rs"]
-mod sys;
+use std::ffi::OsStr;
 
-/// `Uname` is meant for types that can provide information relevant to `uname`.
-pub trait Uname {
+mod lib_impl;
+pub use lib_impl::*;
+
+/// `PlatformInfoAPI` defines a trait API providing `uname` (aka "Unix name") style platform information.
+// ref: <https://www.gnu.org/software/libc/manual/html_node/Platform-Type.html> @@ <https://archive.is/YjjWJ>
+pub trait PlatformInfoAPI {
     /// The name of this implementation of the operating system.
-    fn sysname(&self) -> Cow<str>;
+    fn sysname(&self) -> &OsStr;
 
     /// The node name (network node hostname) of this machine.
-    fn nodename(&self) -> Cow<str>;
+    fn nodename(&self) -> &OsStr;
 
     /// The current release level of the operating system.
-    fn release(&self) -> Cow<str>;
+    fn release(&self) -> &OsStr;
 
     /// The current version level of the current release.
-    fn version(&self) -> Cow<str>;
+    fn version(&self) -> &OsStr;
 
     /// The name of the current system's hardware.
-    fn machine(&self) -> Cow<str>;
+    fn machine(&self) -> &OsStr;
 
     /// The name of the current OS.
-    fn osname(&self) -> Cow<str>;
+    fn osname(&self) -> &OsStr;
 }
-
-// private platform-specific HOST_OS_NAME * ref: [`uname` info](https://en.wikipedia.org/wiki/Uname)
-#[cfg(all(target_os = "linux", any(target_env = "gnu", target_env = "")))]
-const HOST_OS_NAME: &str = "GNU/Linux";
-#[cfg(all(target_os = "linux", not(any(target_env = "gnu", target_env = ""))))]
-const HOST_OS_NAME: &str = "Linux";
-#[cfg(target_os = "android")]
-const HOST_OS_NAME: &str = "Android";
-#[cfg(target_os = "windows")]
-pub const HOST_OS_NAME: &str = "MS/Windows"; // prior art == `busybox`
-#[cfg(target_os = "freebsd")]
-const HOST_OS_NAME: &str = "FreeBSD";
-#[cfg(target_os = "netbsd")]
-const HOST_OS_NAME: &str = "NetBSD";
-#[cfg(target_os = "openbsd")]
-const HOST_OS_NAME: &str = "OpenBSD";
-#[cfg(target_vendor = "apple")]
-const HOST_OS_NAME: &str = "Darwin";
-#[cfg(target_os = "fuchsia")]
-const HOST_OS_NAME: &str = "Fuchsia";
-#[cfg(target_os = "redox")]
-const HOST_OS_NAME: &str = "Redox";
