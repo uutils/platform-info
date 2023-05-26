@@ -116,7 +116,14 @@ impl Debug for UTSName {
             .field("release", &oss_from_cstr(&self.0.release))
             .field("version", &oss_from_cstr(&self.0.version))
             .field("machine", &oss_from_cstr(&self.0.machine));
-        #[cfg(not(target_vendor = "apple" /* or `target_os = "macos"` */))]
+        // BSD-like platforms are missing the domainname field
+        #[cfg(not(any(
+            target_os = "macos",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "openbsd",
+            target_os = "netbsd"
+        )))]
         {
             debug_struct = debug_struct.field("domainname", &oss_from_cstr(&self.0.domainname));
         }
@@ -141,7 +148,14 @@ impl PartialEq for UTSName {
                 other.0.version,
                 other.0.machine,
             );
-        #[cfg(not(target_vendor = "apple" /* or `target_os = "macos"` */))]
+        // BSD-like platforms are missing the domainname field
+        #[cfg(not(any(
+            target_os = "macos",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "openbsd",
+            target_os = "netbsd"
+        )))]
         {
             equal = equal && (self.0.domainname == other.0.domainname)
         }
