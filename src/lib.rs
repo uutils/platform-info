@@ -36,6 +36,10 @@ use std::ffi::OsStr;
 mod lib_impl;
 pub use lib_impl::*;
 
+//===
+
+pub type PlatformInfoError = BoxedThreadSafeStdError;
+
 /// `PlatformInfoAPI` defines a trait API providing `uname` (aka "Unix name") style platform information.
 // ref: <https://www.gnu.org/software/libc/manual/html_node/Platform-Type.html> @@ <https://archive.is/YjjWJ>
 pub trait PlatformInfoAPI {

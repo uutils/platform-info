@@ -11,7 +11,6 @@
 #![warn(unused_results)]
 
 use std::convert::TryFrom;
-use std::error::Error;
 use std::io;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
@@ -31,6 +30,7 @@ use super::util::{to_c_string, to_c_wstring, CWSTR};
 use super::{WinApiFileVersionInfo, WinApiSystemInfo};
 
 use super::PathStr;
+use super::WinOSError;
 
 //===
 
@@ -74,7 +74,8 @@ impl WinApiSystemInfo {
 /// *Returns* an owned, mutable [`OSVERSIONINFOEXW`] structure (fully initialized).
 // ref: [`OSVERSIONINFOEXW`](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw) @@ <https://archive.is/n4hBb>
 #[allow(non_snake_case)]
-pub fn create_OSVERSIONINFOEXW() -> Result<OSVERSIONINFOEXW, Box<dyn Error>> {
+pub fn create_OSVERSIONINFOEXW(
+) -> Result<OSVERSIONINFOEXW, crate::lib_impl::BoxedThreadSafeStdError> {
     let os_info_size = DWORD::try_from(mem::size_of::<OSVERSIONINFOEXW>())?;
     let mut os_info: OSVERSIONINFOEXW = unsafe { mem::zeroed() };
     os_info.dwOSVersionInfoSize = os_info_size;
@@ -420,7 +421,7 @@ pub fn WinAPI_VerSetConditionMask(
 #[allow(non_snake_case)]
 pub fn WinOsFileVersionInfoQuery_root(
     version_info: &WinApiFileVersionInfo,
-) -> Result<&VS_FIXEDFILEINFO, Box<dyn Error>> {
+) -> Result<&VS_FIXEDFILEINFO, WinOSError> {
     // NOTE: this function could be expanded to cover root, translation, and information queries by using an enum for a return value
 
     // VerQueryValueW
@@ -462,7 +463,7 @@ pub fn WinOsFileVersionInfoQuery_root(
 /// Wraps [`Kernel32/IsWow64Process`](https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process).
 #[allow(dead_code)] // * fn is used by test(s)
 #[allow(non_snake_case)]
-pub fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, Box<dyn Error>> {
+pub fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, WinOSError> {
     // kernel32.dll/IsWow64Process
     // extern "stdcall" fn(HANDLE, *mut BOOL) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process> @@ <https://archive.is/K00m6>
@@ -495,7 +496,7 @@ pub fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, Box<dyn Error>> 
 ///
 /// Wraps [`NTDLL/RtlGetVersion`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion).
 #[allow(non_snake_case)]
-pub fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, Box<dyn Error>> {
+pub fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, WinOSError> {
     // ntdll.dll/RtlGetVersion
     // extern "stdcall" fn(*mut RTL_OSVERSIONINFOEXW) -> NTSTATUS
     // ref: <https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion> @@ <https://archive.is/H1Ls2>

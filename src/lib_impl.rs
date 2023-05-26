@@ -5,6 +5,11 @@
 use std::path::Path;
 use std::path::PathBuf;
 
+//=== types
+
+pub type ThreadSafeStdError = dyn std::error::Error + Send + Sync;
+pub type BoxedThreadSafeStdError = Box<ThreadSafeStdError>;
+
 /// A slice of a path string
 /// (akin to [`str`]; aka/equivalent to [`Path`]).
 pub type PathStr = Path;
