@@ -23,12 +23,12 @@ use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 
-use crate::{PlatformInfoAPI, PlatformInfoError};
+use crate::{PlatformInfoAPI, PlatformInfoError, UNameAPI};
 
 use unix_safe::*;
 
 // PlatformInfo
-/// Handles initial retrieval and holds information for the current platform (a Unix-like OS in this case).
+/// Handles initial retrieval and holds cached information for the current platform (a Unix-like OS in this case).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
     // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
@@ -42,10 +42,9 @@ pub struct PlatformInfo {
     osname: OsString,
 }
 
-impl PlatformInfo {
-    /// Creates a new instance of `PlatformInfo`.
-    /// This function *should* never fail.
-    pub fn new() -> Result<Self, PlatformInfoError> {
+impl PlatformInfoAPI for PlatformInfo {
+    // * note: this function *should* never fail
+    fn new() -> Result<Self, PlatformInfoError> {
         let utsname = UTSName(utsname()?);
         Ok(Self {
             utsname,
@@ -54,12 +53,12 @@ impl PlatformInfo {
             release: oss_from_cstr(&utsname.0.release),
             version: oss_from_cstr(&utsname.0.version),
             machine: oss_from_cstr(&utsname.0.machine),
-            osname: OsString::from(crate::HOST_OS_NAME),
+            osname: OsString::from(crate::lib_impl::HOST_OS_NAME),
         })
     }
 }
 
-impl PlatformInfoAPI for PlatformInfo {
+impl UNameAPI for PlatformInfo {
     fn sysname(&self) -> &OsStr {
         &self.sysname
     }
@@ -207,7 +206,7 @@ mod unix_safe {
 fn test_osname() {
     let info = PlatformInfo::new().unwrap();
     let osname = info.osname().to_string_lossy();
-    assert!(osname.starts_with(crate::HOST_OS_NAME));
+    assert!(osname.starts_with(crate::lib_impl::HOST_OS_NAME));
 }
 
 #[test]

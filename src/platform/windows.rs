@@ -41,7 +41,7 @@ use winapi::shared::minwindef::*;
 use winapi::um::sysinfoapi::*;
 use winapi::um::winnt::*;
 
-use crate::PlatformInfoAPI;
+use crate::{PlatformInfoAPI, PlatformInfoError, UNameAPI};
 
 use super::PathStr;
 use super::PathString;
@@ -54,7 +54,7 @@ use windows_safe::*;
 //===
 
 // PlatformInfo
-/// Handles initial retrieval and holds information for the current platform (Windows/WinOS in this case).
+/// Handles initial retrieval and holds cached information for the current platform (Windows/WinOS in this case).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
     pub computer_name: OsString,
@@ -69,10 +69,9 @@ pub struct PlatformInfo {
     osname: OsString,
 }
 
-impl PlatformInfo {
-    /// Creates a new instance of `PlatformInfo`.
-    /// Because of the way the information is retrieved, it is possible for this function to fail.
-    pub fn new() -> Result<Self, PlatformInfoError> {
+impl PlatformInfoAPI for PlatformInfo {
+    // * note: due to the method of information retrieval, this *may* fail
+    fn new() -> Result<Self, PlatformInfoError> {
         let computer_name = WinOsGetComputerName()?;
         let system_info = WinApiSystemInfo(WinAPI_GetNativeSystemInfo());
         let version_info = os_version_info()?;
@@ -99,7 +98,7 @@ impl PlatformInfo {
     }
 }
 
-impl PlatformInfoAPI for PlatformInfo {
+impl UNameAPI for PlatformInfo {
     fn sysname(&self) -> &OsStr {
         &self.sysname
     }
@@ -509,7 +508,7 @@ fn determine_machine(system_info: &WinApiSystemInfo) -> OsString {
 }
 
 fn determine_osname(version_info: &WinOsVersionInfo) -> OsString {
-    let mut osname = OsString::from(crate::HOST_OS_NAME);
+    let mut osname = OsString::from(crate::lib_impl::HOST_OS_NAME);
     osname.extend([
         OsString::from(" ("),
         version_info.os_name.clone(),
@@ -584,7 +583,7 @@ fn test_osname() {
     let info = PlatformInfo::new().unwrap();
     let osname = info.osname().to_string_lossy();
     println!("osname=[{}]'{}'", osname.len(), osname);
-    assert!(osname.starts_with(crate::HOST_OS_NAME));
+    assert!(osname.starts_with(crate::lib_impl::HOST_OS_NAME));
 }
 
 #[test]
