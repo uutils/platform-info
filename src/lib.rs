@@ -29,7 +29,7 @@ use of every feature.
 // spell-checker:ignore (API) nodename osname sysname
 // spell-checker:ignore (uutils) coreutils uutils
 
-#![warn(unused_results)]
+#![warn(unused_results)] // enable warnings for unused results
 
 use std::ffi::OsStr;
 

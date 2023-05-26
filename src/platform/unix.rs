@@ -17,7 +17,7 @@
 // refs:
 // [Byte-to/from-String Conversions](https://nicholasbishop.github.io/rust-conversions) @@ <https://archive.is/AnDCY>
 
-#![warn(unused_results)]
+#![warn(unused_results)] // enable warnings for unused results
 
 use std::ffi::{OsStr, OsString};
 use std::fmt;

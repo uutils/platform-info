@@ -1,6 +1,6 @@
 // "plumbing" setup and connections for `lib.rs`
 
-#![warn(unused_results)]
+#![warn(unused_results)] // enable warnings for unused results
 
 #[cfg(target_os = "windows")]
 use std::path::Path;

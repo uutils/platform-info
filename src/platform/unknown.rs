@@ -9,7 +9,7 @@
 // spell-checker:ignore (names) Ingvar Stepanyan * me@rreverser.com
 // spell-checker:ignore (uutils) coreutils uutils
 
-#![warn(unused_results)]
+#![warn(unused_results)] // enable warnings for unused results
 
 use std::ffi::{OsStr, OsString};
 

@@ -28,7 +28,7 @@
 // spell-checker:ignore (WinAPI) ctypes CWSTR DWORDLONG dwStrucVersion FARPROC FIXEDFILEINFO HIWORD HMODULE libloaderapi LOWORD LPCSTR LPCVOID LPCWSTR lpdw LPDWORD lplp LPOSVERSIONINFOEXW LPSYSTEM lptstr LPVOID LPWSTR minwindef ntdef ntstatus OSVERSIONINFOEXW processthreadsapi PUINT SMALLBUSINESS SUITENAME sysinfo sysinfoapi sysinfoapi TCHAR TCHARs ULONGLONG VERSIONINFO WCHAR WCHARs winapi winbase winver WSTR wstring
 // spell-checker:ignore (WinOS) ntdll
 
-#![warn(unused_results)]
+#![warn(unused_results)] // enable warnings for unused results
 
 use std::convert::TryFrom;
 use std::ffi::{OsStr, OsString};
@@ -130,7 +130,7 @@ impl UNameAPI for PlatformInfo {
 /// Contains information about the current computer system.
 ///
 /// Wraps [SYSTEM_INFO](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info).
-#[derive(Clone, Copy /* , Debug, PartialEq, Eq */)]
+#[derive(Clone, Copy /* , Debug, PartialEq, Eq *//* note: implemented elsewhere */)]
 pub struct WinApiSystemInfo(
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info> @@ <https://archive.is/cqbrj>
     SYSTEM_INFO,
@@ -496,11 +496,11 @@ fn determine_machine(system_info: &WinApiSystemInfo) -> OsString {
         },
         PROCESSOR_ARCHITECTURE_IA64 => "ia64",
         PROCESSOR_ARCHITECTURE_ARM => "arm", // `arm` may be under-specified compared to GNU implementations
-        PROCESSOR_ARCHITECTURE_ARM64 => "aarch64",
+        PROCESSOR_ARCHITECTURE_ARM64 => "aarch64", // alternatively, `arm64` may be more correct
         PROCESSOR_ARCHITECTURE_MIPS => "mips",
         PROCESSOR_ARCHITECTURE_PPC => "powerpc",
         PROCESSOR_ARCHITECTURE_ALPHA | PROCESSOR_ARCHITECTURE_ALPHA64 => "alpha",
-        PROCESSOR_ARCHITECTURE_SHX => "superh", // "SuperH" processor
+        PROCESSOR_ARCHITECTURE_SHX => "superh", // a "SuperH" processor
         _ => "unknown",
     };
 
