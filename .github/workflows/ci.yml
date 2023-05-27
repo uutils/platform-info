@@ -14,6 +14,13 @@ env:
   RUSTC_WRAPPER: 'sccache'
   SCCACHE_GHA_ENABLED: 'true'
 
+# terminate execution of the current workflow group when there is a newer changeset detected
+# * the group is defined by "WORKFLOW_NAME-REF", where REF can be a branch, tag, or pull-request reference
+# * workflows executing for the default branch are excluded from termination
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
+
 jobs:
   style_format:
     name: Style/format
