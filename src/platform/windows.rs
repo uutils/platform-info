@@ -390,14 +390,14 @@ where
     info.wProductType = VER_NT_WORKSTATION;
 
     let mask = WinAPI_VerSetConditionMask(0, VER_SUITENAME, VER_EQUAL);
-    let suite_mask = if WinAPI_VerifyVersionInfoW(&info, VER_SUITENAME, mask) != 0 {
+    let suite_mask = if WinAPI_VerifyVersionInfoW(&info, VER_SUITENAME, mask) != FALSE {
         VER_SUITE_WH_SERVER
     } else {
         0
     };
 
     let mask = WinAPI_VerSetConditionMask(0, VER_PRODUCT_TYPE, VER_EQUAL);
-    let product_type = if WinAPI_VerifyVersionInfoW(&info, VER_PRODUCT_TYPE, mask) != 0 {
+    let product_type = if WinAPI_VerifyVersionInfoW(&info, VER_PRODUCT_TYPE, mask) != FALSE {
         VER_NT_WORKSTATION
     } else {
         0
