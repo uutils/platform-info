@@ -2,21 +2,30 @@
 
 #![warn(unused_results)]
 
+#[cfg(target_os = "windows")]
 use std::path::Path;
+#[cfg(target_os = "windows")]
 use std::path::PathBuf;
+
+//=== types
+
+pub type ThreadSafeStdError = dyn std::error::Error + Send + Sync;
+pub type BoxedThreadSafeStdError = Box<ThreadSafeStdError>;
 
 /// A slice of a path string
 /// (akin to [`str`]; aka/equivalent to [`Path`]).
-pub type PathStr = Path;
+#[cfg(target_os = "windows")]
+type PathStr = Path;
 /// An owned, mutable path string
 /// (akin to [`String`]; aka/equivalent to [`PathBuf`]).
-pub type PathString = PathBuf;
+#[cfg(target_os = "windows")]
+type PathString = PathBuf;
 
 //=== platform-specific const
 
 // HOST_OS_NAME * ref: [`uname` info](https://en.wikipedia.org/wiki/Uname)
 #[cfg(all(target_os = "linux", any(target_env = "gnu", target_env = "")))]
-pub const HOST_OS_NAME: &str = "GNU/Linux";
+const HOST_OS_NAME: &str = "GNU/Linux";
 #[cfg(all(target_os = "linux", not(any(target_env = "gnu", target_env = ""))))]
 pub const HOST_OS_NAME: &str = "Linux";
 #[cfg(target_os = "android")]
@@ -35,6 +44,8 @@ pub const HOST_OS_NAME: &str = "Darwin";
 pub const HOST_OS_NAME: &str = "Fuchsia";
 #[cfg(target_os = "redox")]
 pub const HOST_OS_NAME: &str = "Redox";
+#[cfg(not(any(unix, windows)))]
+pub const HOST_OS_NAME: &str = "unknown";
 
 //=== platform-specific module code
 

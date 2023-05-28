@@ -31,7 +31,6 @@
 #![warn(unused_results)]
 
 use std::convert::TryFrom;
-use std::error::Error;
 use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
@@ -42,10 +41,12 @@ use winapi::shared::minwindef::*;
 use winapi::um::sysinfoapi::*;
 use winapi::um::winnt::*;
 
-use crate::PlatformInfoAPI;
+use crate::{PlatformInfoAPI, PlatformInfoError, UNameAPI};
 
 use super::PathStr;
 use super::PathString;
+
+type WinOSError = crate::lib_impl::BoxedThreadSafeStdError;
 
 mod windows_safe;
 use windows_safe::*;
@@ -53,7 +54,7 @@ use windows_safe::*;
 //===
 
 // PlatformInfo
-/// Handles initial retrieval and holds information for the current platform (Windows/WinOS in this case).
+/// Handles initial retrieval and holds cached information for the current platform (Windows/WinOS in this case).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
     pub computer_name: OsString,
@@ -68,10 +69,9 @@ pub struct PlatformInfo {
     osname: OsString,
 }
 
-impl PlatformInfo {
-    /// Creates a new instance of `PlatformInfo`.
-    /// Because of the way the information is retrieved, it is possible for this function to fail.
-    pub fn new() -> Result<Self, Box<dyn Error>> {
+impl PlatformInfoAPI for PlatformInfo {
+    // * note: due to the method of information retrieval, this *may* fail
+    fn new() -> Result<Self, PlatformInfoError> {
         let computer_name = WinOsGetComputerName()?;
         let system_info = WinApiSystemInfo(WinAPI_GetNativeSystemInfo());
         let version_info = os_version_info()?;
@@ -98,7 +98,7 @@ impl PlatformInfo {
     }
 }
 
-impl PlatformInfoAPI for PlatformInfo {
+impl UNameAPI for PlatformInfo {
     fn sysname(&self) -> &OsStr {
         &self.sysname
     }
@@ -276,7 +276,7 @@ impl Eq for WinApiSystemInfo {}
 // WinOSGetComputerName
 /// *Returns* a NetBIOS or DNS name associated with the local computer.
 #[allow(non_snake_case)]
-fn WinOsGetComputerName() -> Result<OsString, Box<dyn Error>> {
+fn WinOsGetComputerName() -> Result<OsString, WinOSError> {
     //## NameType ~ using "ComputerNameDnsHostname" vs "ComputerNamePhysicalDnsHostname"
     // * "ComputerNamePhysicalDnsHostname" *may* have a different (more specific) name when in a DNS cluster
     // * `uname -n` may show the more specific cluster name (see https://clusterlabs.org/pacemaker/doc/deprecated/en-US/Pacemaker/1.1/html/Clusters_from_Scratch/_short_node_names.html)
@@ -300,7 +300,7 @@ fn WinOsGetComputerName() -> Result<OsString, Box<dyn Error>> {
 #[allow(non_snake_case)]
 fn WinOsGetFileVersionInfo<P: AsRef<PathStr>>(
     file_path: P,
-) -> Result<WinApiFileVersionInfo, Box<dyn Error>> {
+) -> Result<WinApiFileVersionInfo, WinOSError> {
     let file_version_size = WinAPI_GetFileVersionInfoSizeW(&file_path);
     if file_version_size == 0 {
         return Err(Box::new(io::Error::last_os_error()));
@@ -316,7 +316,7 @@ fn WinOsGetFileVersionInfo<P: AsRef<PathStr>>(
 // WinOSGetSystemDirectory
 /// *Returns* a resolved path to the Windows System Directory (aka `%SystemRoot%`).
 #[allow(non_snake_case)]
-fn WinOsGetSystemDirectory() -> Result<PathString, Box<dyn Error>> {
+fn WinOsGetSystemDirectory() -> Result<PathString, WinOSError> {
     let required_capacity: UINT = WinAPI_GetSystemDirectoryW(None);
     let mut data = vec![0; usize::try_from(required_capacity)?];
     let result = WinAPI_GetSystemDirectoryW(&mut data);
@@ -337,7 +337,7 @@ fn WinOsGetSystemDirectory() -> Result<PathString, Box<dyn Error>> {
 /// it useless for Windows 8.1 and later windows versions.
 // ref: <https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getversionexw> @@ <https://archive.is/bYAwT>
 // ref: <https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw> @@ <https://archive.is/n4hBb>
-fn os_version_info() -> Result<WinOsVersionInfo, Box<dyn Error>> {
+fn os_version_info() -> Result<WinOsVersionInfo, WinOSError> {
     match os_version_info_from_dll() {
         Ok(os_info) => Ok(os_info),
         Err(_) => {
@@ -352,7 +352,7 @@ fn os_version_info() -> Result<WinOsVersionInfo, Box<dyn Error>> {
 
 // os_version_info_from_dll
 /// *Returns* version info (as [`WinOsVersionInfo`]) obtained via `NTDLL/RtlGetVersion()`.
-fn os_version_info_from_dll() -> Result<WinOsVersionInfo, Box<dyn Error>> {
+fn os_version_info_from_dll() -> Result<WinOsVersionInfo, WinOSError> {
     let os_info = NTDLL_RtlGetVersion()?;
     Ok(WinOsVersionInfo {
         os_name: winos_name(
@@ -372,7 +372,7 @@ fn os_version_info_from_dll() -> Result<WinOsVersionInfo, Box<dyn Error>> {
 /// *Returns* version info (as [`WinOsVersionInfo`]) obtained from `file_path`.
 ///
 /// `file_path` ~ if empty or `None`, default to the full path of "kernel32.dll" (a known, omnipresent, system file)
-fn version_info_from_file<I, P>(file_path: I) -> Result<WinOsVersionInfo, Box<dyn Error>>
+fn version_info_from_file<I, P>(file_path: I) -> Result<WinOsVersionInfo, WinOSError>
 where
     I: Into<Option<P>>,
     P: AsRef<PathStr>,
@@ -414,7 +414,7 @@ where
 /// *Returns* version (as an [`MmbrVersion`]) copied from a view (aka slice) into the supplied `file_version_info`.
 fn mmbr_from_file_version(
     file_version_info: WinApiFileVersionInfo,
-) -> Result<MmbrVersion, Box<dyn Error>> {
+) -> Result<MmbrVersion, WinOSError> {
     let info = WinOsFileVersionInfoQuery_root(&file_version_info)?;
     Ok(MmbrVersion {
         major: DWORD::try_from(HIWORD(info.dwProductVersionMS))?,
@@ -508,7 +508,7 @@ fn determine_machine(system_info: &WinApiSystemInfo) -> OsString {
 }
 
 fn determine_osname(version_info: &WinOsVersionInfo) -> OsString {
-    let mut osname = OsString::from(crate::HOST_OS_NAME);
+    let mut osname = OsString::from(crate::lib_impl::HOST_OS_NAME);
     osname.extend([
         OsString::from(" ("),
         version_info.os_name.clone(),
@@ -583,7 +583,7 @@ fn test_osname() {
     let info = PlatformInfo::new().unwrap();
     let osname = info.osname().to_string_lossy();
     println!("osname=[{}]'{}'", osname.len(), osname);
-    assert!(osname.starts_with(crate::HOST_OS_NAME));
+    assert!(osname.starts_with(crate::lib_impl::HOST_OS_NAME));
 }
 
 #[test]

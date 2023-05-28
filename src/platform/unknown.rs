@@ -11,27 +11,26 @@
 
 #![warn(unused_results)]
 
-use std::error::Error;
 use std::ffi::{OsStr, OsString};
 
-use crate::PlatformInfoAPI;
+use crate::{PlatformInfoAPI, PlatformInfoError, UNameAPI};
 
 // PlatformInfo
-/// Handles initial retrieval and holds information for the current platform ("unknown" in this case).
+/// Handles initial retrieval and holds cached information for the current platform ("unknown" in this case).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
     unknown: OsString,
 }
 
-impl PlatformInfo {
-    pub fn new() -> Result<Self, Box<dyn Error>> {
+impl PlatformInfoAPI for PlatformInfo {
+    fn new() -> Result<Self, PlatformInfoError> {
         Ok(Self {
-            unknown: OsString::from("unknown"),
+            unknown: OsString::from(crate::lib_impl::HOST_OS_NAME),
         })
     }
 }
 
-impl PlatformInfoAPI for PlatformInfo {
+impl UNameAPI for PlatformInfo {
     fn sysname(&self) -> &OsStr {
         &self.unknown
     }

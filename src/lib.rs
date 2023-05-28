@@ -34,11 +34,32 @@ use of every feature.
 use std::ffi::OsStr;
 
 mod lib_impl;
-pub use lib_impl::*;
 
-/// `PlatformInfoAPI` defines a trait API providing `uname` (aka "Unix name") style platform information.
+//===
+
+// PlatformInfo
+/// Handles initial retrieval and holds cached information for the current platform.
+pub type PlatformInfo = lib_impl::PlatformInfo;
+
+// PlatformInfoError
+/// The common error type for `PlatformInfo`.
+pub type PlatformInfoError = lib_impl::BoxedThreadSafeStdError;
+
+// PlatformInfoAPI
+/// Defines the full API for `PlatformInfo`.
+// * includes `UNameAPI`
+pub trait PlatformInfoAPI: UNameAPI {
+    /// Creates a new instance of `PlatformInfo`.
+    /// <br> On some platforms, it is possible for this function to fail.
+    fn new() -> Result<Self, PlatformInfoError>
+    where
+        Self: Sized;
+}
+
+// UNameAPI
+/// Defines a trait API providing `uname` (aka "Unix name") style platform information.
 // ref: <https://www.gnu.org/software/libc/manual/html_node/Platform-Type.html> @@ <https://archive.is/YjjWJ>
-pub trait PlatformInfoAPI {
+pub trait UNameAPI {
     /// The name of this implementation of the operating system.
     fn sysname(&self) -> &OsStr;
 

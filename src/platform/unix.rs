@@ -19,17 +19,16 @@
 
 #![warn(unused_results)]
 
-use std::error::Error;
 use std::ffi::{OsStr, OsString};
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 
-use crate::PlatformInfoAPI;
+use crate::{PlatformInfoAPI, PlatformInfoError, UNameAPI};
 
 use unix_safe::*;
 
 // PlatformInfo
-/// Handles initial retrieval and holds information for the current platform (a Unix-like OS in this case).
+/// Handles initial retrieval and holds cached information for the current platform (a Unix-like OS in this case).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
     // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
@@ -43,10 +42,9 @@ pub struct PlatformInfo {
     osname: OsString,
 }
 
-impl PlatformInfo {
-    /// Creates a new instance of `PlatformInfo`.
-    /// This function *should* never fail.
-    pub fn new() -> Result<Self, Box<dyn Error>> {
+impl PlatformInfoAPI for PlatformInfo {
+    // * note: this function *should* never fail
+    fn new() -> Result<Self, PlatformInfoError> {
         let utsname = UTSName(utsname()?);
         Ok(Self {
             utsname,
@@ -55,12 +53,12 @@ impl PlatformInfo {
             release: oss_from_cstr(&utsname.0.release),
             version: oss_from_cstr(&utsname.0.version),
             machine: oss_from_cstr(&utsname.0.machine),
-            osname: OsString::from(crate::HOST_OS_NAME),
+            osname: OsString::from(crate::lib_impl::HOST_OS_NAME),
         })
     }
 }
 
-impl PlatformInfoAPI for PlatformInfo {
+impl UNameAPI for PlatformInfo {
     fn sysname(&self) -> &OsStr {
         &self.sysname
     }
@@ -170,7 +168,6 @@ impl Eq for UTSName {}
 //#region unsafe code
 mod unix_safe {
     use std::convert::TryFrom;
-    use std::error::Error;
     use std::ffi::{CStr, OsStr, OsString};
     use std::io;
     use std::mem::MaybeUninit;
@@ -188,7 +185,7 @@ mod unix_safe {
 
     // utsname()
     /// *Returns* a `libc::utsname` structure containing `uname`-like OS system information.
-    pub fn utsname() -> Result<libc::utsname, Box<dyn Error>> {
+    pub fn utsname() -> Result<libc::utsname, std::io::Error> {
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/fn.uname.html>
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
         let mut uts = MaybeUninit::<libc::utsname>::uninit();
@@ -197,7 +194,7 @@ mod unix_safe {
             // SAFETY: `libc::uname()` succeeded => `uts` was initialized
             Ok(unsafe { uts.assume_init() })
         } else {
-            Err(Box::new(io::Error::last_os_error()))
+            Err(io::Error::last_os_error())
         }
     }
 }
@@ -209,7 +206,7 @@ mod unix_safe {
 fn test_osname() {
     let info = PlatformInfo::new().unwrap();
     let osname = info.osname().to_string_lossy();
-    assert!(osname.starts_with(crate::HOST_OS_NAME));
+    assert!(osname.starts_with(crate::lib_impl::HOST_OS_NAME));
 }
 
 #[test]
