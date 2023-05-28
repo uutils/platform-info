@@ -390,14 +390,14 @@ where
     info.wProductType = VER_NT_WORKSTATION;
 
     let mask = WinAPI_VerSetConditionMask(0, VER_SUITENAME, VER_EQUAL);
-    let suite_mask = if WinAPI_VerifyVersionInfoW(&info, VER_SUITENAME, mask) != 0 {
+    let suite_mask = if WinAPI_VerifyVersionInfoW(&info, VER_SUITENAME, mask) != FALSE {
         VER_SUITE_WH_SERVER
     } else {
         0
     };
 
     let mask = WinAPI_VerSetConditionMask(0, VER_PRODUCT_TYPE, VER_EQUAL);
-    let product_type = if WinAPI_VerifyVersionInfoW(&info, VER_PRODUCT_TYPE, mask) != 0 {
+    let product_type = if WinAPI_VerifyVersionInfoW(&info, VER_PRODUCT_TYPE, mask) != FALSE {
         VER_NT_WORKSTATION
     } else {
         0
@@ -723,6 +723,23 @@ fn test_known_winos_names() {
     assert_eq!(
         winos_name(10, 0, 22621, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
         "Windows 11"
+    );
+    // test unmatched versions (triggers `_` matches and returns a `default_name`)
+    assert_eq!(
+        winos_name(5, 9, 3790, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 5.9"
+    );
+    assert_eq!(
+        winos_name(5, 9, 3790, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 5.9"
+    );
+    assert_eq!(
+        winos_name(6, 9, 9600, VER_NT_WORKSTATION, VER_SUITE_PERSONAL),
+        "Windows 6.9"
+    );
+    assert_eq!(
+        winos_name(6, 9, 9600, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
+        "Windows Server 6.9"
     );
 }
 
