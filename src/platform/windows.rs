@@ -57,8 +57,11 @@ use windows_safe::*;
 /// Handles initial retrieval and holds cached information for the current platform (Windows/WinOS in this case).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
+    /// Cached computer name.
     pub computer_name: OsString,
+    /// Wraps a cached [`WinApiSystemInfo`].
     pub system_info: WinApiSystemInfo,
+    /// Wraps a cached [`WinOsVersionInfo`].
     pub version_info: WinOsVersionInfo,
     // * private-use fields
     sysname: OsString,

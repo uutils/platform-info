@@ -65,6 +65,8 @@ pub struct VS_FIXEDFILEINFO {
 
 impl WinApiSystemInfo {
     #[allow(non_snake_case)]
+    /// Returns `wProcessorArchitecture` extracted from the [`SYSTEM_INFO`](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) structure.
+    /// <br> Refer to [`SYSTEM_INFO`](https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) for more information.
     pub fn wProcessorArchitecture(&self) -> WORD {
         unsafe { self.0.u.s().wProcessorArchitecture }
     }
