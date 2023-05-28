@@ -560,6 +560,7 @@ fn structure_clone() {
         dwFileDateLS: 0,
     };
     println!("{:?}", ffi);
-    let ffi_copy = ffi.clone();
-    assert_eq!(ffi_copy, ffi);
+    #[allow(clippy::clone_on_copy)] // ignore `clippy::clone_on_copy` warning for direct testing
+    let ffi_clone = ffi.clone();
+    assert_eq!(ffi_clone, ffi);
 }
