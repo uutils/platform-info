@@ -38,18 +38,22 @@ mod lib_impl;
 //===
 
 // PlatformInfo
-/// Handles initial retrieval and holds cached information for the current platform.
-pub type PlatformInfo = lib_impl::PlatformInfo;
+// Handles initial retrieval and holds cached information for the current platform.
+pub use lib_impl::PlatformInfo;
+#[cfg(unix)]
+pub use lib_impl::UTSName;
+#[cfg(windows)]
+pub use lib_impl::{WinApiSystemInfo, WinOsVersionInfo};
 
 // PlatformInfoError
-/// The common error type for `PlatformInfo`.
-pub type PlatformInfoError = lib_impl::BoxedThreadSafeStdError;
+/// The common error type for [`PlatformInfoAPI`].
+pub use lib_impl::BoxedThreadSafeStdError as PlatformInfoError;
 
 // PlatformInfoAPI
-/// Defines the full API for `PlatformInfo`.
+/// Defines the full API for [`PlatformInfo`].
 // * includes `UNameAPI`
 pub trait PlatformInfoAPI: UNameAPI {
-    /// Creates a new instance of `PlatformInfo`.
+    /// Creates a new instance of [`PlatformInfo`].
     /// <br> On some platforms, it is possible for this function to fail.
     fn new() -> Result<Self, PlatformInfoError>
     where
