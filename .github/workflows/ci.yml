@@ -1,6 +1,6 @@
-# spell-checker:ignore (rust) clippy rustfmt rustup RUSTC RUSTFLAGS Zpanic Cpanic RUSTDOCFLAGS Ccodegen Coverflow profraw
-# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov sccache (vars) tempfile () ntempfile uutils
-# spell-checker:ignore (people) dtolnay ; Swatinem
+# spell-checker:ignore (rust) clippy rustdoc rustfmt rustup RUSTC RUSTFLAGS Zpanic Cpanic RUSTDOCFLAGS Ccodegen Coverflow profraw
+# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov markdownlint sccache (vars) tempfile () ntempfile uutils
+# spell-checker:ignore (people) dtolnay ; Swatinem ; DavidAnson
 
 on: [push, pull_request]
 
@@ -22,6 +22,25 @@ concurrency:
   cancel-in-progress: ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
 
 jobs:
+  style_docs:
+    name: Style/docs
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.3
+      - uses: DavidAnson/markdownlint-cli2-action@v10
+        with:
+          command: fix
+          globs: |
+            *.md
+      - shell: bash
+        run: RUSTDOCFLAGS="--deny warnings" cargo doc ## any warning is an error
+
   style_format:
     name: Style/format
     runs-on: ubuntu-latest
@@ -74,6 +93,7 @@ jobs:
           # environment
           echo "## environment"
           echo "CI='${CI}'"
+          echo "PWD='${PWD}'"
           # tooling info display
           echo "## tooling"
           which gcc >/dev/null 2>&1 && (gcc --version | head -1) || true
@@ -81,7 +101,6 @@ jobs:
           rustup show active-toolchain
           cargo -V
           rustc -V
-          cargo tree -V
           # dependencies
           echo "## crate dependency list"
           # * note: for applications, use `--locked` for `cargo fetch`` and `cargo tree`) and commit *Cargo.lock*
