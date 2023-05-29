@@ -64,9 +64,9 @@ pub struct VS_FIXEDFILEINFO {
 //#region unsafe code
 
 impl WinApiSystemInfo {
-    #[allow(non_snake_case)]
     /// Returns `wProcessorArchitecture` extracted from the [`SYSTEM_INFO`](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) structure.
     /// <br> Refer to [`SYSTEM_INFO`](https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) for more information.
+    #[allow(non_snake_case)]
     pub fn wProcessorArchitecture(&self) -> WORD {
         unsafe { self.0.u.s().wProcessorArchitecture }
     }
@@ -223,7 +223,7 @@ pub fn WinAPI_GetFileVersionInfoW<P: AsRef<PathStr>>(
 ///
 /// If the function is called from a 64-bit application, it is equivalent to the GetSystemInfo function.
 /// If the function is called from an x86 or x64 application running on a 64-bit system that does not have an Intel64 or
-//  x64 processor (such as ARM64), it will return information as if the system is x86 only if x86 emulation is supported
+/// x64 processor (such as ARM64), it will return information as if the system is x86 only if x86 emulation is supported
 /// (or x64 if x64 emulation is also supported).
 ///
 /// Wraps WinOS [`Kernel32/GetNativeSystemInfo(...)`](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getnativesysteminfo).
@@ -560,7 +560,7 @@ fn structure_clone() {
         dwFileDateLS: 0,
     };
     println!("{:?}", ffi);
-    #[allow(clippy::clone_on_copy)] // ignore `clippy::clone_on_copy` warning for direct testing
+    #[allow(clippy::clone_on_copy)] // ignore warning for direct testing of `clone()` method
     let ffi_clone = ffi.clone();
     assert_eq!(ffi_clone, ffi);
 }
