@@ -12,7 +12,7 @@ keywords = ["platform", "info", "system"]
 categories = ["os"]
 license = "MIT"
 
-# spell-checker:ignore (crates) libc winapi (features) libloaderapi processthreadsapi sysinfoapi winbase winver
+# spell-checker:ignore (crates) libc winapi (features) failpoints libloaderapi processthreadsapi sysinfoapi winbase winver
 
 [target.'cfg(not(target_os = "windows"))'.dependencies]
 libc = "0.2"

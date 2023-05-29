@@ -8,7 +8,7 @@
 
 // spell-checker:ignore (API) domainname nodename osname sysname
 // spell-checker:ignore (libc) libc utsname
-// spell-checker:ignore (jargon) hasher
+// spell-checker:ignore (jargon) failpoint failpoints hasher
 // spell-checker:ignore (names) Jian Zeng * anonymousknight96
 // spell-checker:ignore (rust) uninit
 // spell-checker:ignore (uutils) coreutils uutils

@@ -1,6 +1,6 @@
 // spell-checker:ignore (abbrev) MSVC
 // spell-checker:ignore (API) sysname osname nodename
-// spell-checker:ignore (jargon) armv aarch
+// spell-checker:ignore (jargon) armv aarch failpoints
 // spell-checker:ignore (rust) nonminimal repr stdcall uninit
 // spell-checker:ignore (uutils) coreutils uutils
 // spell-checker:ignore (vars) mmbr mmrb

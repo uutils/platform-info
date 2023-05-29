@@ -21,9 +21,9 @@
 
 // spell-checker:ignore (abbrev/acronyms) MSVC POSIX SuperH
 // spell-checker:ignore (API) sysname osname nodename
-// spell-checker:ignore (jargon) armv aarch hasher mmbr
+// spell-checker:ignore (jargon) armv aarch failpoints hasher mmbr
 // spell-checker:ignore (people) Roy Ivy III * rivy
-// spell-checker:ignore (rust) repr stdcall uninit
+// spell-checker:ignore (rust) consts repr stdcall uninit
 // spell-checker:ignore (uutils) coreutils uutils
 // spell-checker:ignore (WinAPI) ctypes CWSTR DWORDLONG dwStrucVersion FARPROC FIXEDFILEINFO HIWORD HMODULE libloaderapi LOWORD LPCSTR LPCVOID LPCWSTR lpdw LPDWORD lplp LPOSVERSIONINFOEXW LPSYSTEM lptstr LPVOID LPWSTR minwindef ntdef ntstatus OSVERSIONINFOEXW processthreadsapi PUINT SMALLBUSINESS SUITENAME sysinfo sysinfoapi sysinfoapi TCHAR TCHARs ULONGLONG VERSIONINFO WCHAR WCHARs winapi winbase winver WSTR wstring
 // spell-checker:ignore (WinOS) ntdll
