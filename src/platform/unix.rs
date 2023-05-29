@@ -17,7 +17,7 @@
 // refs:
 // [Byte-to/from-String Conversions](https://nicholasbishop.github.io/rust-conversions) @@ <https://archive.is/AnDCY>
 
-#![warn(unused_results)]
+#![warn(unused_results)] // enable warnings for unused results
 
 use std::ffi::{OsStr, OsString};
 use std::fmt;
@@ -31,6 +31,7 @@ use unix_safe::*;
 /// Handles initial retrieval and holds cached information for the current platform (a Unix-like OS in this case).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PlatformInfo {
+    /// Contains the cached results of the `utsname()` system call.
     // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
     pub utsname: UTSName, /* aka "Unix Time-sharing System Name"; ref: <https://stackoverflow.com/questions/41669397/whats-the-meaning-of-utsname-in-linux> */
     // * private-use fields

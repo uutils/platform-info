@@ -8,7 +8,7 @@
 
 A simple cross-platform way to get information about the currently running system.
 
-## Example
+## Examples
 
 This simple example:
 
@@ -21,7 +21,7 @@ This simple example:
 use platform_info::*;
 
 fn main() {
-    let info = PlatformInfo::new().unwrap();
+    let info = PlatformInfo::new().expect("Unable to determine platform info");
     // println!("info={:#?}", info);
 
     println!("{}", info.sysname().to_string_lossy());
@@ -45,6 +45,8 @@ GNU/Linux
 ```
 
 > Using `cargo run --example ex` will build and execute this [example code](examples/ex.rs).
+
+Other examples can be found in the [examples](examples) directory.
 
 ## License
 

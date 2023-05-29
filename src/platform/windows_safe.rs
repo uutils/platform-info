@@ -8,7 +8,7 @@
 // spell-checker:ignore (WinAPI) ctypes CWSTR DWORDLONG dwStrucVersion FARPROC FIXEDFILEINFO HIWORD HMODULE libloaderapi LOWORD LPCSTR LPCVOID LPCWSTR lpdw LPDWORD lplp LPOSVERSIONINFOEXW LPSYSTEM lptstr LPVOID LPWSTR minwindef ntdef ntstatus OSVERSIONINFOEXW processthreadsapi PUINT SMALLBUSINESS SUITENAME sysinfo sysinfoapi sysinfoapi TCHAR TCHARs ULONGLONG WCHAR WCHARs winapi winbase winver WSTR wstring
 // spell-checker:ignore (WinOS) ntdll
 
-#![warn(unused_results)]
+#![warn(unused_results)] // enable warnings for unused results
 
 use std::convert::TryFrom;
 use std::io;
@@ -65,6 +65,8 @@ pub struct VS_FIXEDFILEINFO {
 
 impl WinApiSystemInfo {
     #[allow(non_snake_case)]
+    /// Returns `wProcessorArchitecture` extracted from the [`SYSTEM_INFO`](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) structure.
+    /// <br> Refer to [`SYSTEM_INFO`](https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) for more information.
     pub fn wProcessorArchitecture(&self) -> WORD {
         unsafe { self.0.u.s().wProcessorArchitecture }
     }
@@ -89,7 +91,7 @@ pub fn create_OSVERSIONINFOEXW(
 /// When the reference count reaches zero, the module is unloaded from the address space of the calling process and the
 /// handle is no longer valid.
 ///
-/// *Returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-zero for fn *success*.
+/// *Returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-`FALSE` (aka non-zero) for fn *success*.
 ///
 /// Wraps WinOS [`Kernel32/FreeLibrary(...)`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary).
 #[allow(non_snake_case)]
@@ -97,7 +99,7 @@ pub fn WinAPI_FreeLibrary(module: HMODULE /* from `hModule: HMODULE` */) -> BOOL
     // FreeLibrary
     // pub unsafe fn FreeLibrary(hLibModule: HMODULE) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary> @@ <https://archive.is/jWCsU>
-    // * *returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-zero for fn *success*
+    // * *returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-`FALSE` (aka non-zero) for fn *success*
     unsafe { FreeLibrary(module) }
 }
 
@@ -112,7 +114,7 @@ pub fn WinAPI_FreeLibrary(module: HMODULE /* from `hModule: HMODULE` */) -> BOOL
 ///   - for non-`FALSE` return, contains the number of TCHARs (aka WCHARs) copied to the destination buffer, *not including* the terminating null character
 ///   - for `FALSE` return, contains the buffer size required for the result, *including* the terminating null character
 ///
-/// *Returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-zero for fn *success*.
+/// *Returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-`FALSE` (aka non-zero) for fn *success*.
 ///
 ///### Notes
 ///
@@ -139,7 +141,7 @@ where
     // * `nSize` ~ (in) specifies the size of the destination buffer (*lpBuffer) in TCHARs (aka WCHARs)
     // * `nSize` ~ (out) on *fn failure* (aka `FALSE` return), receives the buffer size required for the result, *including* the terminating null character
     // * `nSize` ~ (out) on *fn success*, receives the number of TCHARs (aka WCHARs) copied to the destination buffer, *not including* the terminating null character
-    // * *returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-zero for fn *success*
+    // * *returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-`FALSE` (aka non-zero) for fn *success*
     let maybe_buffer = buffer.into();
     let (buffer_ptr, length) = match maybe_buffer {
         Some(buf) => (buf.as_mut_ptr(), DWORD::try_from(buf.len()).unwrap_or(0)),
@@ -189,7 +191,7 @@ pub fn WinAPI_GetFileVersionInfoSizeW<P: AsRef<PathStr>>(
 // WinAPI_GetFileVersionInfoW
 /// Retrieves version information for the specified file (`file_path`); stored into BYTE vector (`data`).
 ///
-/// *Returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-zero for fn *success*.
+/// *Returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-`FALSE` (aka non-zero) for fn *success*.
 ///
 /// Wraps WinOS [`Version/GetFileVersionInfoW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-getfileversioninfow).
 #[allow(non_snake_case)]
@@ -204,7 +206,7 @@ pub fn WinAPI_GetFileVersionInfoW<P: AsRef<PathStr>>(
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-getfileversioninfow> @@ <https://archive.is/4rx6D>
     // * handle/dwHandle == *ignored*
     // * length/dwLen == maximum size (in bytes) of buffer at data_ptr/lpData
-    // * *returns* BOOL ~ `FALSE` (aka zero) for fn *failure*, o/w non-zero for fn *success*
+    // * *returns* BOOL ~ `FALSE` (aka zero) for fn *failure*, o/w non-`FALSE` (aka non-zero) for fn *success*
     let file_path_cws: CWSTR = to_c_wstring(file_path.as_ref());
     unsafe {
         GetFileVersionInfoW(
@@ -327,7 +329,7 @@ pub fn WinAPI_LoadLibrary<P: AsRef<PathStr>>(
 /// Compares a set of operating system version requirements (`version_info`, `type_mask`, and `condition_mask`) to the
 /// corresponding values for the currently running version of the system.
 ///
-/// *Returns* BOOL ~ `FALSE` (aka zero) if resource is non-existent or requirements are not met; o/w non-`FALSE`
+/// *Returns* BOOL ~ `FALSE` (aka zero) if resource is non-existent or requirements are not met; o/w non-`FALSE` (aka non-zero)
 ///
 /// Wraps WinOS [`Kernel32/VerifyVersionInfoW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-verifyversioninfow).
 #[allow(non_snake_case)]
@@ -342,7 +344,7 @@ pub fn WinAPI_VerifyVersionInfoW(
     // version_info/lpVersionInformation ~ pointer to (const) version info requirements for comparison
     // type_mask ~ mask indicating members of version_info to be tested
     // condition_mask ~ type of comparison for each version_info member to be compared
-    // * returns BOOL ~ FALSE (aka zero), for non-existent resource or invalid requirements; o/w non-zero
+    // * returns BOOL ~ `FALSE` (aka zero) for non-existent resource or invalid requirements; o/w non-`FALSE` (aka non-zero)
     let version_info_ptr: *const OSVERSIONINFOEXW = version_info;
     unsafe {
         VerifyVersionInfoW(
@@ -373,7 +375,7 @@ pub fn WinAPI_VerQueryValueW<'a, S: AsRef<str>>(
     // version_info_ptr/pBlock ~ pointer to (const) version info
     // info_view/lplpBuffer ~ pointer into version info supplied by version_info_ptr (no new allocations)
     // info_view_length/puLen ~ pointer to size (in characters [TCHARs/WCHARs] for "version info values", in bytes for translation array or root block)
-    // * returns BOOL ~ `0` (aka `FALSE`), for invalid/non-existent resource; o/w non-zero
+    // * returns BOOL ~ `FALSE` (aka zero) for invalid/non-existent resource; o/w non-`FALSE` (aka non-zero)
     let version_info_ptr = version_info.as_ptr() as LPCVOID;
     unsafe {
         VerQueryValueW(
@@ -430,7 +432,7 @@ pub fn WinOsFileVersionInfoQuery_root(
     // version_info_ptr/pBlock ~ pointer to (const) version info
     // info_view/lplpBuffer ~ pointer into version info supplied by version_info_ptr (no new allocations)
     // info_view_length/puLen ~ pointer to size (in characters [TCHARs/WCHARs] for "version info values", in bytes for translation array or root block)
-    // * returns BOOL ~ `FALSE` (aka zero), for invalid/non-existent resource; o/w non-zero for *fn success*
+    // * returns BOOL ~ `FALSE` (aka zero) for invalid/non-existent resource; o/w non-`FALSE` (aka non-zero) for *fn success*
 
     let version_info_data = &version_info.data;
 
@@ -558,6 +560,7 @@ fn structure_clone() {
         dwFileDateLS: 0,
     };
     println!("{:?}", ffi);
-    let ffi_copy = ffi.clone();
-    assert_eq!(ffi_copy, ffi);
+    #[allow(clippy::clone_on_copy)] // ignore `clippy::clone_on_copy` warning for direct testing
+    let ffi_clone = ffi.clone();
+    assert_eq!(ffi_clone, ffi);
 }

@@ -1,6 +1,6 @@
 // "plumbing" setup and connections for `lib.rs`
 
-#![warn(unused_results)]
+#![warn(unused_results)] // enable warnings for unused results
 
 #[cfg(target_os = "windows")]
 use std::path::Path;
@@ -9,7 +9,9 @@ use std::path::PathBuf;
 
 //=== types
 
+/// Standard thread-safe error type
 pub type ThreadSafeStdError = dyn std::error::Error + Send + Sync;
+/// Standard thread-safe error type (boxed to allow translation for any std::error::Error type)
 pub type BoxedThreadSafeStdError = Box<ThreadSafeStdError>;
 
 /// A slice of a path string

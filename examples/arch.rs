@@ -6,7 +6,10 @@
 use platform_info::*;
 
 fn main() {
-    let info = PlatformInfo::new().unwrap();
+    let info = PlatformInfo::new().unwrap_or_else(|err| {
+        eprintln!("Unable to determine platform info: {}", err);
+        std::process::exit(1);
+    });
     println!(
         "{}",
         match info.machine().to_os_string().into_string() {

@@ -1,7 +1,5 @@
 // spell-checker:ignore (API) nodename osname sysname
 
-use regex;
-
 use platform_info::*;
 
 #[test]
