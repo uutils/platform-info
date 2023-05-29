@@ -553,36 +553,30 @@ fn test_nodename_no_trailing_NUL() {
 
 #[test]
 fn test_machine() {
-    let is_wow64 = KERNEL32_IsWow64Process(WinAPI_GetCurrentProcess()).unwrap_or_else(|err| {
-        println!("ERR: IsWow64Process(): {:#?}", err);
-        false
-    });
-
-    let target = if cfg!(target_arch = "x86_64") || (cfg!(target_arch = "x86") && is_wow64) {
-        vec!["x86_64"]
-    } else if cfg!(target_arch = "x86") {
-        vec!["i386", "i486", "i586", "i686"]
-    } else if cfg!(target_arch = "arm") {
-        vec!["arm"]
-    } else if cfg!(target_arch = "aarch64") {
-        // NOTE: keeping both of these until the correct behavior is sorted out
-        vec!["arm64", "aarch64"]
-    } else if cfg!(target_arch = "powerpc") {
-        vec!["powerpc"]
-    } else if cfg!(target_arch = "mips") {
-        vec!["mips"]
-    } else {
-        // NOTE: the other architecture are currently not valid targets for Rust (in fact, I am
-        //       almost certain some of these are not even valid targets for the Windows build)
-        vec!["unknown"]
-    };
-    println!("target={:#?}", target);
+    #[allow(unused_assignments)] // suppress false-positive
+    #[allow(unused_mut)] // suppress; need for `mut` is dependent on target_arch
+    let mut expected = vec![std::env::consts::ARCH];
+    // expected is correct for "arm", "aarch64" and "x86_64"
+    // * [cfg(target_arch = "arm")] ... vec!["arm"]
+    // * [cfg(target_arch = "aarch64")] ... vec!["aarch64" /* , "arm64" */] // "aarch64" == "arm64" for WinOS
+    // * [cfg(target_arch = "x86_64")] ... vec!["x86_64" /* , "amd64" */] // "x86_64" == "amd64" for WinOS
+    #[cfg(target_arch = "x86")]
+    {
+        let is_wow64 = KERNEL32_IsWow64Process(WinAPI_GetCurrentProcess()).unwrap();
+        expected = if is_wow64 {
+            vec!["x86_64"]
+        } else {
+            vec!["i386", "i486", "i586", "i686"]
+        };
+    }
+    // note: [2023-05] any alternate architectures are likely impossible targets for Rust/WinOS
+    println!("expected={:#?}", expected);
 
     let info = PlatformInfo::new().unwrap();
     let machine = info.machine().to_string_lossy();
     println!("machine=[{}]'{}'", machine.len(), machine);
 
-    assert!(target.contains(&&machine[..]));
+    assert!(expected.contains(&&machine[..]));
 }
 
 #[test]
@@ -597,7 +591,7 @@ fn test_osname() {
 fn test_version_vs_version() {
     let version_via_dll = os_version_info_from_dll().unwrap();
     let version_via_file = version_info_from_file::<_, &str>(None).unwrap();
-    assert!(version_via_file == version_info_from_file("").unwrap());
+    assert!(version_via_file == version_info_from_file("" /* default file */).unwrap());
 
     println!("version (via dll) = '{:#?}'", version_via_dll);
     println!("version (via known file) = '{:#?}'", version_via_file);
@@ -618,6 +612,7 @@ fn test_version_vs_version() {
         .parse::<u32>()
         .unwrap();
     assert!(version_via_dll_n.checked_sub(version_via_file_n) < Some(1000));
+    assert!(version_via_dll_n.checked_sub(version_via_file_n) >= Some(0));
 }
 
 #[test]
@@ -754,8 +749,17 @@ fn test_known_winos_names() {
 fn structure_clone() {
     let info = PlatformInfo::new().unwrap();
     println!("{:?}", info);
-    let info_copy = info.clone();
-    assert_eq!(info_copy, info);
+    let info_clone = info.clone();
+    assert_eq!(info_clone, info);
+
+    // WinApiSystemInfo
+    #[allow(clippy::clone_on_copy)] // ignore warning for direct testing of `clone()` method
+    let si_clone = info.system_info.clone();
+    assert_eq!(si_clone, info.system_info);
+
+    // WinOsVersionInfo
+    let vi_clone = info.version_info.clone();
+    assert_eq!(vi_clone, info.version_info);
 
     let mmbr = MmbrVersion {
         major: 1,
@@ -764,13 +768,13 @@ fn structure_clone() {
         release: 4,
     };
     println!("{:?}", mmbr);
-    let mmbr_copy = mmbr.clone();
-    assert_eq!(mmbr_copy, mmbr);
+    let mmbr_clone = mmbr.clone();
+    assert_eq!(mmbr_clone, mmbr);
 
     let fvi = WinApiFileVersionInfo {
         data: vec![1, 2, 3, 4],
     };
     println!("{:?}", fvi);
-    let fvi_copy = fvi.clone();
-    assert_eq!(fvi_copy, fvi);
+    let fvi_clone = fvi.clone();
+    assert_eq!(fvi_clone, fvi);
 }
