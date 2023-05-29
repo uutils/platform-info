@@ -489,21 +489,25 @@ fn determine_machine(system_info: &WinApiSystemInfo) -> OsString {
     // ref: [LLVM Triples](https://llvm.org/doxygen/classllvm_1_1Triple.html) @@ <https://archive.is/MwVL8>
     // ref: [SuperH](https://en.wikipedia.org/wiki/SuperH) @@ <https://archive.is/ckr6a>
     // ref: [OldNewThing ~ SuperH](https://devblogs.microsoft.com/oldnewthing/20190805-00/?p=102749) @@ <https://archive.is/KWlyV>
+    // ref: [SYSTEM_PROCESSOR_INFORMATION documented](https://masm32.com/board/index.php?topic=3401.0) @@ <https://archive.is/hGfxz>
+    // NOTE: architecture names generally correspond to GNU and Rust practices
     let arch_str = match arch {
-        PROCESSOR_ARCHITECTURE_AMD64 => "x86_64",
+        PROCESSOR_ARCHITECTURE_AMD64 => "x86_64", // aka "amd64" for WinOS
         PROCESSOR_ARCHITECTURE_INTEL => match system_info.0.wProcessorLevel {
             4 => "i486",
             5 => "i586",
             6 => "i686",
             _ => "i386",
         },
-        PROCESSOR_ARCHITECTURE_IA64 => "ia64",
-        PROCESSOR_ARCHITECTURE_ARM => "arm", // `arm` may be under-specified compared to GNU implementations
-        PROCESSOR_ARCHITECTURE_ARM64 => "aarch64", // alternatively, `arm64` may be more correct
+        // * WinOS has only bare-bones specification for ARM processors
+        PROCESSOR_ARCHITECTURE_ARM => "arm",
+        PROCESSOR_ARCHITECTURE_ARM64 => "aarch64", // aka "arm64" for WinOS
+        // * [2023-05] enumerated but likely impossible target architectures for Rust/WinOS
+        PROCESSOR_ARCHITECTURE_ALPHA | PROCESSOR_ARCHITECTURE_ALPHA64 => "alpha",
+        PROCESSOR_ARCHITECTURE_IA64 => "ia64", // Intel Itanium
         PROCESSOR_ARCHITECTURE_MIPS => "mips",
         PROCESSOR_ARCHITECTURE_PPC => "powerpc",
-        PROCESSOR_ARCHITECTURE_ALPHA | PROCESSOR_ARCHITECTURE_ALPHA64 => "alpha",
-        PROCESSOR_ARCHITECTURE_SHX => "superh", // a "SuperH" processor
+        PROCESSOR_ARCHITECTURE_SHX => "sh", // a "SuperH" processor
         _ => "unknown",
     };
 
