@@ -217,3 +217,9 @@ fn structure_clone() {
     let info_copy = info.clone();
     assert_eq!(info_copy, info);
 }
+
+#[test]
+fn test_utsname() {
+    let result = utsname();
+    assert!(result.is_ok());
+}

@@ -778,3 +778,25 @@ fn structure_clone() {
     let fvi_clone = fvi.clone();
     assert_eq!(fvi_clone, fvi);
 }
+
+#[test]
+#[allow(non_snake_case)]
+fn test_WinOsGetComputerName() {
+    let result = WinOsGetComputerName();
+    assert!(result.is_ok());
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_WinOsFileVersionInfo() {
+    let file_path = WinOsGetSystemDirectory().unwrap().join("kernel32.dll");
+    let result = WinOsGetFileVersionInfo(&file_path);
+    assert!(result.is_ok());
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_WinOsGetSystemDirectory() {
+    let result = WinOsGetSystemDirectory();
+    assert!(result.is_ok());
+}

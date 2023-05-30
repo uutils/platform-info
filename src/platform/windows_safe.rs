@@ -564,3 +564,50 @@ fn structure_clone() {
     let ffi_clone = ffi.clone();
     assert_eq!(ffi_clone, ffi);
 }
+
+#[test]
+#[allow(non_snake_case)]
+fn test_create_OSVERSIONINFOEXW() {
+    let result = create_OSVERSIONINFOEXW();
+    assert!(result.is_ok());
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_WinAPI_GetCurrentProcess() {
+    let result = WinAPI_GetCurrentProcess();
+    assert_ne!(ptr::null_mut(), result);
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_WinAPI_LoadLibrary() {
+    let result = WinAPI_LoadLibrary("");
+    assert_eq!(ptr::null_mut(), result);
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_WinOsFileVersionInfoQuery_root() {
+    let file_path = super::WinOsGetSystemDirectory()
+        .unwrap()
+        .join("kernel32.dll");
+    let file_info = super::WinOsGetFileVersionInfo(file_path).unwrap();
+
+    let result = WinOsFileVersionInfoQuery_root(&file_info);
+    assert!(result.is_ok());
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_KERNEL32_IsWow64Process() {
+    let result = KERNEL32_IsWow64Process(WinAPI_GetCurrentProcess());
+    assert!(result.is_ok());
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_NTDLL_RtlGetVersion() {
+    let result = NTDLL_RtlGetVersion();
+    assert!(result.is_ok());
+}
