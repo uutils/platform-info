@@ -32,6 +32,8 @@ use super::{WinApiFileVersionInfo, WinApiSystemInfo};
 use super::PathStr;
 use super::WinOSError;
 
+use function_name::named;
+
 //===
 
 // VS_FIXEDFILEINFO
@@ -67,7 +69,14 @@ impl WinApiSystemInfo {
     /// Returns `wProcessorArchitecture` extracted from the [`SYSTEM_INFO`](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) structure.
     /// <br> Refer to [`SYSTEM_INFO`](https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) for more information.
     #[allow(non_snake_case)]
+    #[named]
     pub fn wProcessorArchitecture(&self) -> WORD {
+        const _FN_NAME: &str = function_name!();
+        fail::fail_point!(&format!("WinApiSystemInfo::{_FN_NAME}"), |maybe_s| {
+            /* used as mock */
+            let s = maybe_s.unwrap_or(String::from("0"));
+            s.parse::<WORD>().unwrap_or(0 as WORD)
+        });
         unsafe { self.0.u.s().wProcessorArchitecture }
     }
 }
@@ -76,8 +85,11 @@ impl WinApiSystemInfo {
 /// *Returns* an owned, mutable [`OSVERSIONINFOEXW`] structure (fully initialized).
 // ref: [`OSVERSIONINFOEXW`](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw) @@ <https://archive.is/n4hBb>
 #[allow(non_snake_case)]
+#[named]
 pub fn create_OSVERSIONINFOEXW(
 ) -> Result<OSVERSIONINFOEXW, crate::lib_impl::BoxedThreadSafeStdError> {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { Err(Box::from("fail_point triggered")) });
     let os_info_size = DWORD::try_from(mem::size_of::<OSVERSIONINFOEXW>())?;
     let mut os_info: OSVERSIONINFOEXW = unsafe { mem::zeroed() };
     os_info.dwOSVersionInfoSize = os_info_size;
@@ -95,7 +107,10 @@ pub fn create_OSVERSIONINFOEXW(
 ///
 /// Wraps WinOS [`Kernel32/FreeLibrary(...)`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_FreeLibrary(module: HMODULE /* from `hModule: HMODULE` */) -> BOOL {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { FALSE });
     // FreeLibrary
     // pub unsafe fn FreeLibrary(hLibModule: HMODULE) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary> @@ <https://archive.is/jWCsU>
@@ -127,6 +142,7 @@ pub fn WinAPI_FreeLibrary(module: HMODULE /* from `hModule: HMODULE` */) -> BOOL
 ///
 /// Wraps WinOS [`Kernel32/GetComputerNameExW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getcomputernameexw).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_GetComputerNameExW<'a, T>(
     name_type: COMPUTER_NAME_FORMAT,
     buffer: T,        /* from `lpBuffer: LPWSTR` */
@@ -135,6 +151,8 @@ pub fn WinAPI_GetComputerNameExW<'a, T>(
 where
     T: Into<Option<&'a mut Vec<WCHAR>>>,
 {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { FALSE });
     // pub unsafe fn GetComputerNameExW(NameType: COMPUTER_NAME_FORMAT, lpBuffer: LPWSTR, nSize: LPDWORD) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getcomputernameexw> @@ <https://archive.is/Lgb7p>
     // * `name_type` ~ (in) [COMPUTER_NAME_FORMAT](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ne-sysinfoapi-computer_name_format) @@ <https://archive.is/s18y0>
@@ -159,7 +177,12 @@ where
 /// Wraps WinOS [`Kernel32/GetCurrentProcess()`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess).
 #[allow(dead_code)] // * fn is used by test(s)
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_GetCurrentProcess() -> HANDLE {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| {
+        ptr::null_mut() /* or `0xdeadbeaf as *mut _` */
+    });
     // GetCurrentProcess
     // pub unsafe fn GetCurrentProcess() -> HANDLE
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess> @@ <https://archive.is/AmB3f>
@@ -174,9 +197,12 @@ pub fn WinAPI_GetCurrentProcess() -> HANDLE {
 ///
 /// Wraps WinOS [`Version/GetFileVersionInfoSizeW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-getfileversioninfosizew).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_GetFileVersionInfoSizeW<P: AsRef<PathStr>>(
     file_path: P, /* used to generate `lptstrFilename: LPCWSTR` */ // lpdwHandle: *mut DWORD, /* ignored/not-needed */
 ) -> DWORD {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { 0 });
     // GetFileVersionInfoSizeW
     // pub unsafe fn GetFileVersionInfoSizeW(lptstrFilename: LPCWSTR, lpdwHandle: *mut DWORD) -> DWORD
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-getfileversioninfosizew> @@ <https://archive.is/AdMHL>
@@ -195,12 +221,15 @@ pub fn WinAPI_GetFileVersionInfoSizeW<P: AsRef<PathStr>>(
 ///
 /// Wraps WinOS [`Version/GetFileVersionInfoW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-getfileversioninfow).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_GetFileVersionInfoW<P: AsRef<PathStr>>(
     file_path: P, /* used to generate `lptstrFilename: LPCWSTR` */
     // dwHandle: DWORD, /* ignored/not-needed */
     // dwLen: DWORD,  /* not-needed */
     data: &mut Vec<BYTE>, /* from `lpData: *mut winapi::ctypes::c_void` */
 ) -> BOOL {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { FALSE });
     // GetFileVersionInfoW
     // pub unsafe fn GetFileVersionInfoW(lptstrFilename: LPCWSTR, dwHandle: DWORD, dwLen: DWORD, lpData: *mut c_void) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-getfileversioninfow> @@ <https://archive.is/4rx6D>
@@ -245,10 +274,13 @@ pub fn WinAPI_GetNativeSystemInfo() -> SYSTEM_INFO {
 ///
 /// Wraps WinOS [`Kernel32/GetProcAddress(...)`](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_GetProcAddress<P: AsRef<PathStr>>(
     module: HMODULE, /* from `hModule: HMODULE` */
     symbol_name: P,  /* used to generate `lpProcName: LPCSTR` */
 ) -> FARPROC {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { ptr::null_mut() });
     // GetProcAddress
     // pub unsafe fn GetProcAddress(hModule: HMODULE, lpProcName: LPCSTR) -> FARPROC
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress> @@ <https://archive.is/ZPVMr>
@@ -279,12 +311,15 @@ pub fn WinAPI_GetProcAddress<P: AsRef<PathStr>>(
 ///
 /// Wraps WinOS [`Kernel32/GetSystemDirectoryW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemdirectoryw).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_GetSystemDirectoryW<'a, T>(
     buffer: T, /* from `lpBuffer: LPWSTR` */ //  uSize: UINT, /* not needed */
 ) -> UINT
 where
     T: Into<Option<&'a mut Vec<WCHAR>>>,
 {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { 0 });
     // GetSystemDirectoryW
     // pub unsafe fn GetSystemDirectoryW(lpBuffer: LPWSTR, uSize: UINT) -> UINT
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getsystemdirectoryw> @@ <https://archive.is/OTVW8>
@@ -315,9 +350,12 @@ where
 // ref: <https://github.com/rust-lang/rust/issues/78444>
 // ref: <https://stackoverflow.com/questions/7364846/loading-dll-via-getmodulehandle-loadlibrary-and-using-freelibrary>
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_LoadLibrary<P: AsRef<PathStr>>(
     module_name: P, /* used to generate `lpFileName: LPCWSTR` */
 ) -> HMODULE {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { ptr::null_mut() });
     // LoadLibraryW
     // pub unsafe fn LoadLibraryW(lpFileName: LPCWSTR) -> HMODULE
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw> @@ <https://archive.is/N3Fxf>
@@ -333,11 +371,18 @@ pub fn WinAPI_LoadLibrary<P: AsRef<PathStr>>(
 ///
 /// Wraps WinOS [`Kernel32/VerifyVersionInfoW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-verifyversioninfow).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_VerifyVersionInfoW(
     version_info: &OSVERSIONINFOEXW, /* from `lpVersionInformation: LPOSVERSIONINFOEXW` */
     type_mask: DWORD,                /* from `dwTypeMask: DWORD` */
     condition_mask: DWORDLONG,       /* from `dwlConditionMask: DWORDLONG` */
 ) -> BOOL {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |maybe_s| {
+        /* used as mock */
+        let s = maybe_s.unwrap_or(String::from("0"));
+        s.parse::<BOOL>().unwrap_or(FALSE)
+    });
     // VerifyVersionInfoW
     // pub unsafe fn VerifyVersionInfoW(lpVersionInformation: LPOSVERSIONINFOEXW, dwTypeMask: DWORD, dwlConditionMask: DWORDLONG) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-verifyversioninfow> @@ <https://archive.is/1h5FF>
@@ -363,12 +408,15 @@ pub fn WinAPI_VerifyVersionInfoW(
 ///
 /// Wraps WinOS [`Version/VerQueryValueW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-verqueryvaluew).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinAPI_VerQueryValueW<'a, S: AsRef<str>>(
     version_info: &'a Vec<BYTE>,    /* from `pBlock: LPCVOID` */
     query: S,                       /* from `lpSubBlock: LPCWSTR` */
     info_view: &'a mut LPVOID,      /* from `lplpBuffer: &mut LPVOID` */
     info_view_length: &'a mut UINT, /* from `puLen: PUINT` */
 ) -> BOOL {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { FALSE });
     // VerQueryValueW
     // pub unsafe fn VerQueryValueW(pBlock: LPCVOID, lpSubBlock: LPCWSTR, lplpBuffer: &mut LPVOID, puLen: PUINT) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-verqueryvaluew> @@ <https://archive.is/VqvGQ>
@@ -421,9 +469,12 @@ pub fn WinAPI_VerSetConditionMask(
 ///
 /// Uses WinOS [`Version/WinAPI_VerQueryValueW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-verqueryvaluew).
 #[allow(non_snake_case)]
+#[named]
 pub fn WinOsFileVersionInfoQuery_root(
     version_info: &WinApiFileVersionInfo,
 ) -> Result<&VS_FIXEDFILEINFO, WinOSError> {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { Err(Box::from("fail_point triggered")) });
     // NOTE: this function could be expanded to cover root, translation, and information queries by using an enum for a return value
 
     // VerQueryValueW
@@ -465,7 +516,10 @@ pub fn WinOsFileVersionInfoQuery_root(
 /// Wraps [`Kernel32/IsWow64Process`](https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process).
 #[allow(dead_code)] // * fn is used by test(s)
 #[allow(non_snake_case)]
+#[named]
 pub fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, WinOSError> {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { Err(Box::from("fail_point triggered")) });
     // kernel32.dll/IsWow64Process
     // extern "stdcall" fn(HANDLE, *mut BOOL) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process> @@ <https://archive.is/K00m6>
@@ -486,7 +540,11 @@ pub fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, WinOSError> {
         unsafe { mem::transmute(func as *const ()) };
 
     let mut is_wow64: BOOL = FALSE;
-    let result: BOOL = func(process, &mut is_wow64);
+    #[allow(clippy::redundant_closure_call)] // * required for use of `fail_point!(...)`
+    let result: BOOL = (|| {
+        fail::fail_point!(&format!("{_FN_NAME}::fn"), |_| { FALSE });
+        func(process, &mut is_wow64)
+    })();
 
     let _ = WinAPI_FreeLibrary(module); // FreeLibrary() failure/success can be safely ignored
 
@@ -498,7 +556,10 @@ pub fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, WinOSError> {
 ///
 /// Wraps [`NTDLL/RtlGetVersion`](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion).
 #[allow(non_snake_case)]
+#[named]
 pub fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, WinOSError> {
+    const _FN_NAME: &str = function_name!();
+    fail::fail_point!(_FN_NAME, |_| { Err(Box::from("fail_point triggered")) });
     // ntdll.dll/RtlGetVersion
     // extern "stdcall" fn(*mut RTL_OSVERSIONINFOEXW) -> NTSTATUS
     // ref: <https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion> @@ <https://archive.is/H1Ls2>
@@ -524,7 +585,11 @@ pub fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, WinOSError> {
         Err(_) => return Err(Box::from("Unable to create OSVERSIONINFOEXW".to_string())),
     };
 
-    let result: NTSTATUS = func(&mut os_version_info);
+    #[allow(clippy::redundant_closure_call)] // * required for use of `fail_point!(...)`
+    let result: NTSTATUS = (|| {
+        fail::fail_point!(&format!("{_FN_NAME}::fn"), |_| { STATUS_UNSUCCESSFUL });
+        func(&mut os_version_info)
+    })();
 
     let _ = WinAPI_FreeLibrary(module); // FreeLibrary() failure/success can be safely ignored
 

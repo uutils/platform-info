@@ -20,5 +20,14 @@ libc = "0.2"
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.3", features = ["libloaderapi", "processthreadsapi", "sysinfoapi", "winbase", "winver"] }
 
+[dependencies]
+fail="0.5"
+function_name="0.3"
+serial_test="1"
+
 [dev-dependencies]
 regex = "1"
+
+[features]
+default = []
+feat_failpoints = ["fail/failpoints"]

@@ -174,6 +174,8 @@ mod unix_safe {
     use std::mem::MaybeUninit;
     use std::os::unix::ffi::OsStrExt;
 
+    use function_name::named;
+
     // oss_from_str()
     /// *Returns* an OsString created from a libc::c_char slice.
     pub fn oss_from_cstr(slice: &[libc::c_char]) -> OsString {
@@ -186,11 +188,24 @@ mod unix_safe {
 
     // utsname()
     /// *Returns* a `libc::utsname` structure containing `uname`-like OS system information.
+    #[named]
     pub fn utsname() -> Result<libc::utsname, std::io::Error> {
+        const _FN_NAME: &str = function_name!();
+        fail::fail_point!(_FN_NAME, |_| {
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("{}: fail_point triggered", _FN_NAME),
+            ))
+        });
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/fn.uname.html>
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
         let mut uts = MaybeUninit::<libc::utsname>::uninit();
-        let result = unsafe { libc::uname(uts.as_mut_ptr()) };
+
+        #[allow(clippy::redundant_closure_call)] // * required for use of `fail_point!(...)`
+        let result = (|| {
+            fail::fail_point!(&format!("{_FN_NAME}::fn"), |_| { -1 });
+            unsafe { libc::uname(uts.as_mut_ptr()) }
+        })();
         if result != -1 {
             // SAFETY: `libc::uname()` succeeded => `uts` was initialized
             Ok(unsafe { uts.assume_init() })
