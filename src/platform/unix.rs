@@ -218,7 +218,11 @@ mod unix_safe {
 
 //=== Tests
 
+#[cfg(test)]
+use serial_test::{parallel, serial};
+
 #[test]
+#[parallel]
 fn test_osname() {
     let info = PlatformInfo::new().unwrap();
     let osname = info.osname().to_string_lossy();
@@ -226,6 +230,7 @@ fn test_osname() {
 }
 
 #[test]
+#[parallel]
 fn structure_clone() {
     let info = PlatformInfo::new().unwrap();
     println!("{:?}", info);
@@ -234,7 +239,22 @@ fn structure_clone() {
 }
 
 #[test]
+#[serial]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_utsname() {
     let result = utsname();
     assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("utsname", "return");
+        let result = utsname();
+        assert!(result.is_err());
+    }
+    {
+        let _guard = fail::FailGuard::new("utsname::fn", "return");
+        let result = utsname();
+        assert!(result.is_err());
+    }
 }

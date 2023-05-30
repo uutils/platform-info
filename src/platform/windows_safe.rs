@@ -607,7 +607,11 @@ pub fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, WinOSError> {
 
 //=== Tests
 
+#[cfg(test)]
+use serial_test::{parallel, serial};
+
 #[test]
+#[parallel]
 fn structure_clone() {
     let ffi = VS_FIXEDFILEINFO {
         dwSignature: 0,
@@ -630,29 +634,86 @@ fn structure_clone() {
     assert_eq!(ffi_clone, ffi);
 }
 
+// #[allow(dead_code)]
+// #[cfg_attr(feature = "feat_failpoints", test)]
+// #[cfg_attr(not(feature = "feat_failpoints"), ignore = "test disappears", serial)]
+// fn test_fail_point_disappears() {
+//     let _guard = fail::FailGuard::new("WinApiSystemInfo::wProcessorArchitecture", "return(1001)");
+//     println!("{:?}", fail::list());
+//     let system_info = WinApiSystemInfo(WinAPI_GetNativeSystemInfo());
+//     let result = system_info.wProcessorArchitecture();
+//     println!("{:#?}", system_info);
+//     assert_eq!(result, 1001);
+// }
+
 #[test]
 #[allow(non_snake_case)]
+#[serial]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_create_OSVERSIONINFOEXW() {
     let result = create_OSVERSIONINFOEXW();
     assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("create_OSVERSIONINFOEXW", "return");
+        let result = create_OSVERSIONINFOEXW();
+        assert!(result.is_err());
+    }
 }
 
 #[test]
 #[allow(non_snake_case)]
+#[serial]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_WinAPI_GetCurrentProcess() {
     let result = WinAPI_GetCurrentProcess();
     assert_ne!(ptr::null_mut(), result);
+    {
+        let _guard = fail::FailGuard::new("WinAPI_GetCurrentProcess", "return");
+        let result = WinAPI_GetCurrentProcess();
+        assert_eq!(ptr::null_mut(), result);
+    }
 }
 
 #[test]
 #[allow(non_snake_case)]
+#[serial]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_WinAPI_LoadLibrary() {
     let result = WinAPI_LoadLibrary("");
     assert_eq!(ptr::null_mut(), result);
+    {
+        let _guard = fail::FailGuard::new("WinAPI_LoadLibrary", "off");
+        let result = WinAPI_LoadLibrary("");
+        assert_eq!(ptr::null_mut(), result);
+    }
+    {
+        let _guard = fail::FailGuard::new("WinAPI_LoadLibrary", "return");
+        let result = WinAPI_LoadLibrary("");
+        assert_eq!(ptr::null_mut(), result);
+    }
+    {
+        let _guard = fail::FailGuard::new("WinAPI_LoadLibrary", "return(nonsense)");
+        let result = WinAPI_LoadLibrary("");
+        assert_eq!(ptr::null_mut(), result);
+    }
 }
 
 #[test]
 #[allow(non_snake_case)]
+#[serial]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_WinOsFileVersionInfoQuery_root() {
     let file_path = super::WinOsGetSystemDirectory()
         .unwrap()
@@ -661,18 +722,73 @@ fn test_WinOsFileVersionInfoQuery_root() {
 
     let result = WinOsFileVersionInfoQuery_root(&file_info);
     assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("WinOsFileVersionInfoQuery_root", "return");
+        let result = WinOsFileVersionInfoQuery_root(&file_info);
+        assert!(result.is_err());
+    }
+    {
+        let _guard = fail::FailGuard::new("WinAPI_VerQueryValueW", "return");
+        let result = WinOsFileVersionInfoQuery_root(&file_info);
+        assert!(result.is_err());
+    }
 }
 
 #[test]
 #[allow(non_snake_case)]
+#[serial]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_KERNEL32_IsWow64Process() {
     let result = KERNEL32_IsWow64Process(WinAPI_GetCurrentProcess());
     assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("KERNEL32_IsWow64Process", "return");
+        let result = KERNEL32_IsWow64Process(WinAPI_GetCurrentProcess());
+        assert!(result.is_err());
+    }
+    {
+        let _guard = fail::FailGuard::new("WinAPI_GetProcAddress", "return");
+        let result = KERNEL32_IsWow64Process(WinAPI_GetCurrentProcess());
+        assert!(result.is_err());
+    }
+    {
+        let _guard = fail::FailGuard::new("NTDLL_RtlGetVersion::fn", "return");
+        let result = KERNEL32_IsWow64Process(WinAPI_GetCurrentProcess());
+        assert!(result.is_ok());
+    }
 }
 
 #[test]
 #[allow(non_snake_case)]
+#[serial]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_NTDLL_RtlGetVersion() {
     let result = NTDLL_RtlGetVersion();
     assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("NTDLL_RtlGetVersion", "return");
+        let result = NTDLL_RtlGetVersion();
+        assert!(result.is_err());
+    }
+    {
+        let _guard = fail::FailGuard::new("create_OSVERSIONINFOEXW", "return");
+        let result = NTDLL_RtlGetVersion();
+        assert!(result.is_err());
+    }
+    {
+        let _guard = fail::FailGuard::new("WinAPI_GetProcAddress", "return");
+        let result = NTDLL_RtlGetVersion();
+        assert!(result.is_err());
+    }
+    {
+        let _guard = fail::FailGuard::new("NTDLL_RtlGetVersion::fn", "return");
+        let result = NTDLL_RtlGetVersion();
+        assert!(result.is_err());
+    }
 }

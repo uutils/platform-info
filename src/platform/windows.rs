@@ -532,7 +532,11 @@ fn determine_sysname() -> OsString {
 
 //=== Tests
 
+#[cfg(test)]
+use serial_test::{parallel, serial};
+
 #[test]
+#[parallel]
 fn test_sysname() {
     let info = PlatformInfo::new().unwrap();
     let sysname = info.sysname().to_os_string();
@@ -542,6 +546,7 @@ fn test_sysname() {
 }
 
 #[test]
+#[parallel]
 #[allow(non_snake_case)]
 fn test_nodename_no_trailing_NUL() {
     let info = PlatformInfo::new().unwrap();
@@ -552,6 +557,7 @@ fn test_nodename_no_trailing_NUL() {
 }
 
 #[test]
+#[parallel]
 fn test_machine() {
     #[allow(unused_assignments)] // suppress false-positive
     #[allow(unused_mut)] // suppress; need for `mut` is dependent on target_arch
@@ -580,6 +586,7 @@ fn test_machine() {
 }
 
 #[test]
+#[parallel]
 fn test_osname() {
     let info = PlatformInfo::new().unwrap();
     let osname = info.osname().to_string_lossy();
@@ -588,6 +595,7 @@ fn test_osname() {
 }
 
 #[test]
+#[parallel]
 fn test_version_vs_version() {
     let version_via_dll = os_version_info_from_dll().unwrap();
     let version_via_file = version_info_from_file::<_, &str>(None).unwrap();
@@ -616,6 +624,7 @@ fn test_version_vs_version() {
 }
 
 #[test]
+#[parallel]
 fn test_known_winos_names() {
     // ref: [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
     assert_eq!(
@@ -746,6 +755,7 @@ fn test_known_winos_names() {
 }
 
 #[test]
+#[parallel]
 fn structure_clone() {
     let info = PlatformInfo::new().unwrap();
     println!("{:?}", info);
@@ -780,23 +790,228 @@ fn structure_clone() {
 }
 
 #[test]
+#[serial]
 #[allow(non_snake_case)]
-fn test_WinOsGetComputerName() {
-    let result = WinOsGetComputerName();
-    assert!(result.is_ok());
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
+fn test_determine_machine() {
+    let system_info = WinApiSystemInfo(WinAPI_GetNativeSystemInfo());
+    {
+        let expected = PROCESSOR_ARCHITECTURE_AMD64;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("x86_64"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_INTEL;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let mut system_info = system_info;
+        system_info.0.wProcessorLevel = 3;
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("i386"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_INTEL;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let mut system_info = system_info;
+        system_info.0.wProcessorLevel = 4;
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("i486"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_INTEL;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let mut system_info = system_info;
+        system_info.0.wProcessorLevel = 5;
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("i586"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_INTEL;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let mut system_info = system_info;
+        system_info.0.wProcessorLevel = 6;
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("i686"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_IA64;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("ia64"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_ARM;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("arm"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_ARM64;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("aarch64"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_MIPS;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("mips"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_PPC;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("powerpc"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_ALPHA;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("alpha"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_SHX;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("sh"), result);
+    }
+    {
+        let expected = PROCESSOR_ARCHITECTURE_UNKNOWN;
+        let _guard = fail::FailGuard::new(
+            "WinApiSystemInfo::wProcessorArchitecture",
+            &format!("return({})", expected),
+        );
+        let result = determine_machine(&system_info);
+        assert_eq!(OsString::from("unknown"), result);
+    }
 }
 
 #[test]
+#[serial]
 #[allow(non_snake_case)]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
+fn test_os_version_info() {
+    let result = os_version_info();
+    assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("NTDLL_RtlGetVersion", "return");
+        let result = os_version_info().unwrap();
+        assert_eq!(version_info_from_file("").unwrap(), result);
+    }
+}
+
+#[test]
+#[serial]
+#[allow(non_snake_case)]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
+fn test_version_info_from_file() {
+    let result = version_info_from_file("");
+    assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("WinAPI_VerifyVersionInfoW", "return(1)");
+        let result = version_info_from_file("");
+        assert!(result.is_ok());
+    }
+}
+
+#[test]
+#[serial]
+#[allow(non_snake_case)]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
+fn test_WinOsGetComputerName() {
+    let result = WinOsGetComputerName();
+    assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("WinAPI_GetComputerNameExW", "return");
+        let result = WinOsGetComputerName();
+        assert!(result.is_err());
+    }
+}
+
+#[test]
+#[serial]
+#[allow(non_snake_case)]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_WinOsFileVersionInfo() {
     let file_path = WinOsGetSystemDirectory().unwrap().join("kernel32.dll");
     let result = WinOsGetFileVersionInfo(&file_path);
     assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("WinAPI_GetFileVersionInfoSizeW", "return");
+        let result = WinOsGetFileVersionInfo(&file_path);
+        assert!(result.is_err());
+    }
+    {
+        let _guard = fail::FailGuard::new("WinAPI_GetFileVersionInfoW", "return");
+        let result = WinOsGetFileVersionInfo(&file_path);
+        assert!(result.is_err());
+    }
 }
 
 #[test]
+#[serial]
 #[allow(non_snake_case)]
+#[cfg_attr(
+    not(feature = "feat_failpoints"),
+    ignore = "requires 'feat_failpoints'"
+)]
 fn test_WinOsGetSystemDirectory() {
     let result = WinOsGetSystemDirectory();
     assert!(result.is_ok());
+    {
+        let _guard = fail::FailGuard::new("WinAPI_GetSystemDirectoryW", "return");
+        let result = WinOsGetSystemDirectory();
+        assert!(result.is_err());
+    }
 }
