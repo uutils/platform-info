@@ -26,28 +26,35 @@ type PathString = PathBuf;
 //=== platform-specific const
 
 // HOST_OS_NAME * ref: [`uname` info](https://en.wikipedia.org/wiki/Uname)
-#[cfg(all(target_os = "linux", any(target_env = "gnu", target_env = "")))]
-const HOST_OS_NAME: &str = "GNU/Linux";
-#[cfg(all(target_os = "linux", not(any(target_env = "gnu", target_env = ""))))]
-pub const HOST_OS_NAME: &str = "Linux";
-#[cfg(target_os = "android")]
-pub const HOST_OS_NAME: &str = "Android";
-#[cfg(target_os = "windows")]
-pub const HOST_OS_NAME: &str = "MS/Windows"; // prior art == `busybox`
-#[cfg(target_os = "freebsd")]
-pub const HOST_OS_NAME: &str = "FreeBSD";
-#[cfg(target_os = "netbsd")]
-pub const HOST_OS_NAME: &str = "NetBSD";
-#[cfg(target_os = "openbsd")]
-pub const HOST_OS_NAME: &str = "OpenBSD";
-#[cfg(target_vendor = "apple")]
-pub const HOST_OS_NAME: &str = "Darwin";
-#[cfg(target_os = "fuchsia")]
-pub const HOST_OS_NAME: &str = "Fuchsia";
-#[cfg(target_os = "redox")]
-pub const HOST_OS_NAME: &str = "Redox";
-#[cfg(not(any(unix, windows)))]
-pub const HOST_OS_NAME: &str = "unknown";
+const HOST_OS_NAME: &str = if cfg!(all(
+    target_os = "linux",
+    any(target_env = "gnu", target_env = "")
+)) {
+    "GNU/Linux"
+} else if cfg!(all(
+    target_os = "linux",
+    not(any(target_env = "gnu", target_env = ""))
+)) {
+    "Linux"
+} else if cfg!(target_os = "android") {
+    "Android"
+} else if cfg!(target_os = "windows") {
+    "MS/Windows" // prior art == `busybox`
+} else if cfg!(target_os = "freebsd") {
+    "FreeBSD"
+} else if cfg!(target_os = "netbsd") {
+    "NetBSD"
+} else if cfg!(target_os = "openbsd") {
+    "OpenBSD"
+} else if cfg!(target_vendor = "apple") {
+    "Darwin"
+} else if cfg!(target_os = "fuchsia") {
+    "Fuchsia"
+} else if cfg!(target_os = "redox") {
+    "Redox"
+} else {
+    "unknown"
+};
 
 //=== platform-specific module code
 
