@@ -115,8 +115,10 @@ impl Debug for UTSName {
             .field("release", &oss_from_cstr(&self.0.release))
             .field("version", &oss_from_cstr(&self.0.version))
             .field("machine", &oss_from_cstr(&self.0.machine));
-        // BSD-like platforms are missing the domainname field
+        // The domainname field is not part of the POSIX standard but a GNU extension. Therefor
+        // BSD-like platforms and Illumos are missing the domainname field.
         #[cfg(not(any(
+            target_os = "illumos",
             target_os = "macos",
             target_os = "dragonfly",
             target_os = "freebsd",
@@ -147,8 +149,10 @@ impl PartialEq for UTSName {
                 other.0.version,
                 other.0.machine,
             );
-        // BSD-like platforms are missing the domainname field
+        // The domainname field is not part of the POSIX standard but a GNU extension. Therefor
+        // BSD-like platforms and Illumos are missing the domainname field.
         #[cfg(not(any(
+            target_os = "illumos",
             target_os = "macos",
             target_os = "dragonfly",
             target_os = "freebsd",
