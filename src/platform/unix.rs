@@ -214,6 +214,7 @@ fn test_osname() {
 fn structure_clone() {
     let info = PlatformInfo::new().unwrap();
     println!("{:?}", info);
+    #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let info_copy = info.clone();
     assert_eq!(info_copy, info);
 }
