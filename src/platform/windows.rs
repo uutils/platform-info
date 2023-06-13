@@ -750,6 +750,7 @@ fn test_known_winos_names() {
 fn structure_clone() {
     let info = PlatformInfo::new().unwrap();
     println!("{:?}", info);
+    #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let info_copy = info.clone();
     assert_eq!(info_copy, info);
 
@@ -760,6 +761,7 @@ fn structure_clone() {
         release: 4,
     };
     println!("{:?}", mmbr);
+    #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let mmbr_copy = mmbr.clone();
     assert_eq!(mmbr_copy, mmbr);
 
@@ -767,6 +769,7 @@ fn structure_clone() {
         data: vec![1, 2, 3, 4],
     };
     println!("{:?}", fvi);
+    #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let fvi_copy = fvi.clone();
     assert_eq!(fvi_copy, fvi);
 }
