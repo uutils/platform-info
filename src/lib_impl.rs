@@ -52,6 +52,8 @@ const HOST_OS_NAME: &str = if cfg!(all(
     "Fuchsia"
 } else if cfg!(target_os = "redox") {
     "Redox"
+} else if cfg!(target_os = "illumos") {
+    "Illumos"
 } else {
     "unknown"
 };
