@@ -347,7 +347,7 @@ fn os_version_info() -> Result<WinOsVersionInfo, WinOSError> {
             // as a last resort, try to get the relevant info by loading the version info from a system file
             // Note: this file version may be just the current "base" version and not the actual most up-to-date version info
             // * eg: kernel32.dll (or ntdll.dll) version => "10.0.19041.2130" _vs_ `cmd /c ver` => "10.0.19044.2364"
-            return version_info_from_file("" /* use default file */);
+            version_info_from_file("" /* use default file */)
             // .or. `return version_info_from_file::<_, &str>(None /* use default file */);`
         }
     }
