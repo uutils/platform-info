@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: streetsidesoftware/cspell-action@v4 ## ref: <https://github.com/streetsidesoftware/cspell-action>
+      - uses: streetsidesoftware/cspell-action@v5 ## ref: <https://github.com/streetsidesoftware/cspell-action>
         with:
           incremental_files_only: false
           verbose: true
