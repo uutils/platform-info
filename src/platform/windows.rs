@@ -420,10 +420,10 @@ fn mmbr_from_file_version(
 ) -> Result<MmbrVersion, WinOSError> {
     let info = WinOsFileVersionInfoQuery_root(&file_version_info)?;
     Ok(MmbrVersion {
-        major: DWORD::try_from(HIWORD(info.dwProductVersionMS))?,
-        minor: DWORD::try_from(LOWORD(info.dwProductVersionMS))?,
-        build: DWORD::try_from(HIWORD(info.dwProductVersionLS))?,
-        release: DWORD::try_from(LOWORD(info.dwProductVersionLS))?,
+        major: DWORD::from(HIWORD(info.dwProductVersionMS)),
+        minor: DWORD::from(LOWORD(info.dwProductVersionMS)),
+        build: DWORD::from(HIWORD(info.dwProductVersionLS)),
+        release: DWORD::from(LOWORD(info.dwProductVersionLS)),
     })
 }
 
