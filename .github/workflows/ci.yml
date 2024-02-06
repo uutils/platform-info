@@ -1,5 +1,5 @@
-# spell-checker:ignore (rust) clippy rustdoc rustfmt rustup RUSTC RUSTFLAGS Zpanic Cpanic RUSTDOCFLAGS Ccodegen Coverflow profraw
-# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov markdownlint sccache (vars) tempfile () ntempfile uutils
+# spell-checker:ignore (rust) clippy rustdoc rustfmt rustup RUSTC RUSTFLAGS RUSTDOCFLAGS profraw
+# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov markdownlint sccache () uutils
 # spell-checker:ignore (people) dtolnay ; Swatinem ; DavidAnson
 
 on: [push, pull_request]
