@@ -199,7 +199,7 @@ jobs:
         uses: codecov/codecov-action@v4
         # if: steps.vars.outputs.HAS_CODECOV_TOKEN
         with:
-          # token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
           file: ${{ steps.coverage.outputs.report }}
           ## flags: IntegrationTests, UnitTests, ${{ steps.vars.outputs.CODECOV_FLAGS }}
           flags: ${{ steps.vars.outputs.CODECOV_FLAGS }}
