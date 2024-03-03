@@ -364,7 +364,7 @@ pub fn WinAPI_VerifyVersionInfoW(
 /// Wraps WinOS [`Version/VerQueryValueW(...)`](https://learn.microsoft.com/en-us/windows/win32/api/winver/nf-winver-verqueryvaluew).
 #[allow(non_snake_case)]
 pub fn WinAPI_VerQueryValueW<'a, S: AsRef<str>>(
-    version_info: &'a Vec<BYTE>,    /* from `pBlock: LPCVOID` */
+    version_info: &'a [BYTE],       /* from `pBlock: LPCVOID` */
     query: S,                       /* from `lpSubBlock: LPCWSTR` */
     info_view: &'a mut LPVOID,      /* from `lplpBuffer: &mut LPVOID` */
     info_view_length: &'a mut UINT, /* from `puLen: PUINT` */
