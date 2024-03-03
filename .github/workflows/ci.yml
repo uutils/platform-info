@@ -1,5 +1,5 @@
-# spell-checker:ignore (rust) clippy rustdoc rustfmt rustup RUSTC RUSTFLAGS Zpanic Cpanic RUSTDOCFLAGS Ccodegen Coverflow profraw
-# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov markdownlint sccache (vars) tempfile () ntempfile uutils
+# spell-checker:ignore (rust) clippy rustdoc rustfmt rustup RUSTC RUSTFLAGS RUSTDOCFLAGS profraw
+# spell-checker:ignore (abbrevs/acronyms) MSVC (bash) alnum esac (jargon) maint (utils) codecov grcov lcov markdownlint sccache () uutils
 # spell-checker:ignore (people) dtolnay ; Swatinem ; DavidAnson
 
 on: [push, pull_request]
@@ -199,7 +199,7 @@ jobs:
         uses: codecov/codecov-action@v4
         # if: steps.vars.outputs.HAS_CODECOV_TOKEN
         with:
-          # token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
           file: ${{ steps.coverage.outputs.report }}
           ## flags: IntegrationTests, UnitTests, ${{ steps.vars.outputs.CODECOV_FLAGS }}
           flags: ${{ steps.vars.outputs.CODECOV_FLAGS }}
