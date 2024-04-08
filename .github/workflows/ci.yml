@@ -48,7 +48,7 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - uses: mozilla-actions/sccache-action@v0.0.4
-      - uses: DavidAnson/markdownlint-cli2-action@v15
+      - uses: DavidAnson/markdownlint-cli2-action@v16
         with:
           fix: true
           globs: |
