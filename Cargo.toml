@@ -1,7 +1,7 @@
 [package]
 name = "platform-info"
 version = "2.0.2"
-authors = ["Alex Lyon <arcterus@mail.com>"]
+authors = ["uutils developers"]
 edition = "2018"
 description = "A simple cross-platform interface to get info about a system"
 
