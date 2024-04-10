@@ -3,7 +3,7 @@
 
 // spell-checker:ignore (API) nodename osname sysname
 
-use platform_info::*;
+use platform_info::{PlatformInfo, PlatformInfoAPI, UNameAPI};
 
 fn main() {
     let info = PlatformInfo::new().expect("Unable to determine platform info");

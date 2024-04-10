@@ -50,7 +50,7 @@ fn platform_clone() -> Result<(), String> {
     let info = PlatformInfo::new().unwrap();
     #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let info_copy = info.clone();
-    println!("{:?}", info);
+    println!("{info:?}");
     assert_eq!(info_copy, info);
     Ok(())
 }

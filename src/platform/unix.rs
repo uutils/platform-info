@@ -25,7 +25,7 @@ use std::fmt::{Debug, Formatter};
 
 use crate::{PlatformInfoAPI, PlatformInfoError, UNameAPI};
 
-use unix_safe::*;
+use unix_safe::{oss_from_cstr, utsname};
 
 // PlatformInfo
 /// Handles initial retrieval and holds cached information for the current platform (a Unix-like OS in this case).
@@ -162,7 +162,7 @@ impl PartialEq for UTSName {
             target_os = "netbsd"
         )))]
         {
-            equal = equal && (self.0.domainname == other.0.domainname)
+            equal = equal && (self.0.domainname == other.0.domainname);
         }
         equal
     }
@@ -181,7 +181,7 @@ mod unix_safe {
     use std::os::unix::ffi::OsStrExt;
 
     // oss_from_str()
-    /// *Returns* an OsString created from a libc::c_char slice.
+    /// *Returns* an `OsString` created from a `libc::c_char` slice.
     pub fn oss_from_cstr(slice: &[libc::c_char]) -> OsString {
         assert!(slice.len() < usize::try_from(isize::MAX).unwrap());
         assert!(slice.iter().position(|&c| c == 0 /* NUL */).unwrap() < slice.len());
@@ -219,7 +219,7 @@ fn test_osname() {
 #[test]
 fn structure_clone() {
     let info = PlatformInfo::new().unwrap();
-    println!("{:?}", info);
+    println!("{info:?}");
     #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let info_copy = info.clone();
     assert_eq!(info_copy, info);

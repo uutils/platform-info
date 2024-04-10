@@ -3,11 +3,11 @@
 
 // spell-checker:ignore (API) nodename osname sysname
 
-use platform_info::*;
+use platform_info::{PlatformInfo, PlatformInfoAPI, UNameAPI};
 
 fn main() {
     let info = PlatformInfo::new().unwrap_or_else(|err| {
-        eprintln!("Unable to determine platform info: {}", err);
+        eprintln!("Unable to determine platform info: {err}");
         std::process::exit(1);
     });
     println!(
