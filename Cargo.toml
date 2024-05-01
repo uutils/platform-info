@@ -15,7 +15,7 @@ license = "MIT"
 # spell-checker:ignore (crates) libc winapi (features) libloaderapi processthreadsapi sysinfoapi winbase winver
 
 [target.'cfg(not(target_os = "windows"))'.dependencies]
-libc = "0.2"
+libc = "0.2.154"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.3", features = ["libloaderapi", "processthreadsapi", "sysinfoapi", "winbase", "winver"] }
