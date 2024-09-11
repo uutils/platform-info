@@ -542,7 +542,7 @@ fn test_sysname() {
 fn test_nodename_no_trailing_NUL() {
     let info = PlatformInfo::new().unwrap();
     let nodename = info.nodename().to_string_lossy();
-    let trimmed = nodename.trim().trim_end_matches(|c| c == '\0');
+    let trimmed = nodename.trim().trim_end_matches('\0');
     println!("nodename=[{}]'{}'", nodename.len(), nodename);
     assert_eq!(nodename, trimmed);
 }
