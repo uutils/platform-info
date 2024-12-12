@@ -31,7 +31,7 @@ jobs:
         with:
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
-      - uses: mozilla-actions/sccache-action@v0.0.6
+      - uses: mozilla-actions/sccache-action@v0.0.7
       - run: cargo fmt --all -- --check
 
   style_lint:
@@ -47,7 +47,7 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - uses: mozilla-actions/sccache-action@v0.0.6
+      - uses: mozilla-actions/sccache-action@v0.0.7
       - uses: DavidAnson/markdownlint-cli2-action@v18
         with:
           fix: true
@@ -78,7 +78,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: mozilla-actions/sccache-action@v0.0.6
+      - uses: mozilla-actions/sccache-action@v0.0.7
       - name: Build/Test Info
         shell: bash
         run: |
@@ -153,7 +153,7 @@ jobs:
           toolchain: ${{ steps.vars.outputs.TOOLCHAIN }}
           components: llvm-tools
       - uses: Swatinem/rust-cache@v2
-      - uses: mozilla-actions/sccache-action@v0.0.6
+      - uses: mozilla-actions/sccache-action@v0.0.7
       - run: cargo install grcov
       - name: Test
         shell: bash
