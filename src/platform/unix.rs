@@ -125,7 +125,8 @@ impl Debug for UTSName {
             target_os = "dragonfly",
             target_os = "freebsd",
             target_os = "openbsd",
-            target_os = "netbsd"
+            target_os = "netbsd",
+            target_os = "haiku"
         )))]
         {
             debug_struct = debug_struct.field("domainname", &oss_from_cstr(&self.0.domainname));
@@ -161,7 +162,8 @@ impl PartialEq for UTSName {
             target_os = "dragonfly",
             target_os = "freebsd",
             target_os = "openbsd",
-            target_os = "netbsd"
+            target_os = "netbsd",
+            target_os = "haiku"
         )))]
         {
             equal = equal && (self.0.domainname == other.0.domainname);
