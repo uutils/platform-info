@@ -482,7 +482,7 @@ pub fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, WinOSError> {
         )));
     }
 
-    let func: extern "stdcall" fn(HANDLE, *mut BOOL) -> BOOL =
+    let func: extern "system" fn(HANDLE, *mut BOOL) -> BOOL =
         unsafe { mem::transmute(func as *const ()) };
 
     let mut is_wow64: BOOL = FALSE;
@@ -516,7 +516,7 @@ pub fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, WinOSError> {
             symbol_name, module_file
         )));
     }
-    let func: extern "stdcall" fn(*mut RTL_OSVERSIONINFOEXW) -> NTSTATUS =
+    let func: extern "system" fn(*mut RTL_OSVERSIONINFOEXW) -> NTSTATUS =
         unsafe { mem::transmute(func as *const ()) };
 
     let mut os_version_info = match create_OSVERSIONINFOEXW() {
