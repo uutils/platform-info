@@ -41,7 +41,7 @@ platform-info = "2"
 
 ```rust
 */
-#![doc = include_str!("../examples/ex.rs")]
+#![cfg_attr(doc, doc = include_str!("../examples/ex.rs"))]
 /*!
 ```
 
