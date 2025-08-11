@@ -26,7 +26,7 @@ jobs:
     name: Style/format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
@@ -42,7 +42,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -61,7 +61,7 @@ jobs:
     name: Style/spellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: streetsidesoftware/cspell-action@v7 ## ref: <https://github.com/streetsidesoftware/cspell-action>
         with:
           incremental_files_only: false
@@ -75,7 +75,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -119,7 +119,7 @@ jobs:
           - { os: macos-latest }
           - { os: windows-latest }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Initialize/setup workflow
         id: vars
         shell: bash
