@@ -1,5 +1,7 @@
 // "plumbing" setup and connections for `lib.rs`
 
+// spell-checker:ignore (jargon) armv
+
 #![warn(unused_results)] // enable warnings for unused results
 
 #[cfg(target_os = "windows")]
@@ -22,6 +24,31 @@ type PathStr = Path;
 /// (akin to [`String`]; aka/equivalent to [`PathBuf`]).
 #[cfg(target_os = "windows")]
 type PathString = PathBuf;
+
+//=== platform-specific functions
+
+// map_processor
+/// *Returns* processor type mapped from machine architecture string.
+///
+/// Provides GNU coreutils-compatible processor type mappings from machine architecture strings.
+/// Handles common cross-platform architecture name variations:
+/// * macOS uses "arm64" for ARM-based Macs → maps to "arm"
+/// * Linux uses "aarch64" for ARM64 → passes through as "aarch64"
+/// * Various i386/i486/i586/i686 variants → normalized to "i686"
+/// * ARMv6/v7/v8 variants → mapped to "arm"
+/// * Unknown architectures pass through unchanged (better than returning "unknown")
+///
+/// ref: <https://github.com/uutils/coreutils/issues/8659> @@ <https://archive.is/...>
+pub(crate) fn map_processor(machine: &str) -> String {
+    match machine {
+        "arm64" => "arm".to_string(),
+        "aarch64" => "aarch64".to_string(),
+        "x86_64" | "amd64" => "x86_64".to_string(),
+        "i386" | "i486" | "i586" | "i686" => "i686".to_string(),
+        "armv7l" | "armv6l" | "armv8l" => "arm".to_string(),
+        _ => machine.to_string(),
+    }
+}
 
 //=== platform-specific const
 

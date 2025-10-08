@@ -51,6 +51,10 @@ impl UNameAPI for PlatformInfo {
         &self.unknown
     }
 
+    fn processor(&self) -> &OsStr {
+        &self.unknown
+    }
+
     fn osname(&self) -> &OsStr {
         &self.unknown
     }
@@ -65,6 +69,7 @@ fn test_unknown() {
     assert_eq!(platform_info.release().to_string_lossy(), "unknown");
     assert_eq!(platform_info.version().to_string_lossy(), "unknown");
     assert_eq!(platform_info.machine().to_string_lossy(), "unknown");
+    assert_eq!(platform_info.processor().to_string_lossy(), "unknown");
     assert_eq!(platform_info.osname().to_string_lossy(), "unknown");
 }
 
