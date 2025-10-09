@@ -14,5 +14,6 @@ fn main() {
     println!("{}", info.release().to_string_lossy());
     println!("{}", info.version().to_string_lossy());
     println!("{}", info.machine().to_string_lossy());
+    println!("{}", info.processor().to_string_lossy());
     println!("{}", info.osname().to_string_lossy());
 }
