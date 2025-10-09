@@ -29,6 +29,7 @@ fn main() {
     println!("{}", info.release().to_string_lossy());
     println!("{}", info.version().to_string_lossy());
     println!("{}", info.machine().to_string_lossy());
+    println!("{}", info.processor().to_string_lossy());
     println!("{}", info.osname().to_string_lossy());
 }
 ```
@@ -40,6 +41,7 @@ Linux
 hostname
 5.10.0-8-amd64
 #1 SMP Debian 5.10.46-4 (2021-08-03)
+x86_64
 x86_64
 GNU/Linux
 ```
