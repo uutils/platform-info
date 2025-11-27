@@ -69,6 +69,7 @@ pub struct PlatformInfo {
     release: OsString,
     version: OsString,
     machine: OsString,
+    processor: OsString,
     osname: OsString,
 }
 
@@ -84,6 +85,7 @@ impl PlatformInfoAPI for PlatformInfo {
         let release = version_info.release.clone();
         let version = version_info.version.clone();
         let machine = determine_machine(&system_info);
+        let processor = OsString::from(crate::lib_impl::map_processor(&machine.to_string_lossy()));
         let osname = determine_osname(&version_info);
 
         Ok(Self {
@@ -96,6 +98,7 @@ impl PlatformInfoAPI for PlatformInfo {
             release,
             version,
             machine,
+            processor,
             osname,
         })
     }
@@ -120,6 +123,10 @@ impl UNameAPI for PlatformInfo {
 
     fn machine(&self) -> &OsStr {
         &self.machine
+    }
+
+    fn processor(&self) -> &OsStr {
+        &self.processor
     }
 
     fn osname(&self) -> &OsStr {
@@ -744,6 +751,30 @@ fn test_known_winos_names() {
         winos_name(6, 9, 9600, VER_NT_SERVER, VER_SUITE_SMALLBUSINESS),
         "Windows Server 6.9"
     );
+}
+
+#[test]
+fn test_processor() {
+    let info = PlatformInfo::new().unwrap();
+    let processor = info.processor().to_string_lossy();
+
+    // Processor should not be empty
+    assert!(!processor.is_empty());
+
+    // On common Windows platforms, verify expected mappings
+    #[cfg(target_arch = "x86_64")]
+    assert_eq!(processor, "x86_64", "Windows x86_64 should pass through");
+
+    #[cfg(target_arch = "x86")]
+    assert_eq!(processor, "i686", "Windows x86 should normalize to i686");
+
+    #[cfg(target_arch = "aarch64")]
+    assert_eq!(
+        processor, "aarch64",
+        "Windows ARM64 should pass through as aarch64"
+    );
+
+    println!("Windows processor=[{}]'{}'", processor.len(), processor);
 }
 
 #[test]

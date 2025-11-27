@@ -40,6 +40,7 @@ pub struct PlatformInfo {
     release: OsString,
     version: OsString,
     machine: OsString,
+    processor: OsString,
     osname: OsString,
 }
 
@@ -47,13 +48,16 @@ impl PlatformInfoAPI for PlatformInfo {
     // * note: this function *should* never fail
     fn new() -> Result<Self, PlatformInfoError> {
         let utsname = UTSName(utsname()?);
+        let machine = oss_from_cstr(&utsname.0.machine);
+        let processor = OsString::from(crate::lib_impl::map_processor(&machine.to_string_lossy()));
         Ok(Self {
             utsname,
             sysname: oss_from_cstr(&utsname.0.sysname),
             nodename: oss_from_cstr(&utsname.0.nodename),
             release: oss_from_cstr(&utsname.0.release),
             version: oss_from_cstr(&utsname.0.version),
-            machine: oss_from_cstr(&utsname.0.machine),
+            machine,
+            processor,
             osname: OsString::from(crate::lib_impl::HOST_OS_NAME),
         })
     }
@@ -78,6 +82,10 @@ impl UNameAPI for PlatformInfo {
 
     fn machine(&self) -> &OsStr {
         &self.machine
+    }
+
+    fn processor(&self) -> &OsStr {
+        &self.processor
     }
 
     fn osname(&self) -> &OsStr {
@@ -220,6 +228,28 @@ fn test_osname() {
     let info = PlatformInfo::new().unwrap();
     let osname = info.osname().to_string_lossy();
     assert!(osname.starts_with(crate::lib_impl::HOST_OS_NAME));
+}
+
+#[test]
+fn test_processor() {
+    let info = PlatformInfo::new().unwrap();
+    let processor = info.processor().to_string_lossy();
+
+    // Processor should not be empty
+    assert!(!processor.is_empty());
+
+    // On common platforms, verify expected mappings
+    #[cfg(all(target_arch = "aarch64", target_os = "macos"))]
+    assert_eq!(processor, "arm", "macOS arm64 should map to 'arm'");
+
+    #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
+    assert_eq!(processor, "aarch64", "Linux aarch64 should pass through");
+
+    #[cfg(target_arch = "x86_64")]
+    assert_eq!(processor, "x86_64", "x86_64 should pass through");
+
+    #[cfg(target_arch = "x86")]
+    assert_eq!(processor, "i686", "x86 variants should normalize to i686");
 }
 
 #[test]
