@@ -97,6 +97,8 @@ const HOST_OS_NAME: &str = if cfg!(all(
     "illumos"
 } else if cfg!(target_os = "solaris") {
     "solaris"
+} else if cfg!(target_os = "cygwin") {
+    "Cygwin"
 } else {
     "unknown"
 };
