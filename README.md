@@ -1,6 +1,7 @@
 # platform-info
 
 <!-- spell-checker:ignore (API) nodename osname sysname (rust) println -->
+<!-- spell-checker:ignore (wasm) wasip wasmtime -->
 
 [![Crates.io](https://img.shields.io/crates/v/platform-info.svg)](https://crates.io/crates/platform-info)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -47,6 +48,34 @@ GNU/Linux
 ```
 
 > Using `cargo run --example ex` will build and execute this [example code](examples/ex.rs).
+
+### WASI
+
+To cross-compile and run the example under [WASI](https://wasi.dev/), first install
+[wasmtime](https://wasmtime.dev/):
+
+```shell
+curl https://wasmtime.dev/install.sh -sSf | bash
+```
+
+Then build and run:
+
+```shell
+cargo build --target wasm32-wasip1 --example ex
+wasmtime target/wasm32-wasip1/debug/examples/ex.wasm
+```
+
+This should display:
+
+```text
+wasi
+localhost
+0.0.0
+0.0.0
+wasm32
+wasm32
+WASI
+```
 
 Other examples can be found in the [examples](examples) directory.
 
