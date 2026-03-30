@@ -3,6 +3,7 @@ name = "platform-info"
 version = "2.1.0"
 authors = ["uutils developers"]
 edition = "2018"
+rust-version = "1.65.0"
 description = "A simple cross-platform interface to get info about a system"
 
 homepage = "https://github.com/uutils/platform-info"
