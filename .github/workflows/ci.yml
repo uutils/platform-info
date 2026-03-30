@@ -56,6 +56,11 @@ jobs:
             docs/src/**/*.md
             src/**/*.md
       - run: cargo clippy --all-targets -- -D warnings
+      - name: Clippy (WASI)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          rustup target add wasm32-wasip1
+          cargo clippy --target wasm32-wasip1 -- -D warnings
 
   style_spellcheck:
     name: Style/spellcheck
@@ -107,6 +112,28 @@ jobs:
       - run: cargo test --all-features -- --test-threads 1
         env:
           RUST_BACKTRACE: '1'
+
+  test_wasi:
+    name: Build/Test (WASI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.9
+      - name: Install wasmtime
+        run: |
+          curl https://wasmtime.dev/install.sh -sSf | bash
+          echo "$HOME/.wasmtime/bin" >> $GITHUB_PATH
+      - name: Build for WASI
+        run: cargo build --target wasm32-wasip1
+      - name: Test with wasmtime
+        env:
+          CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime
+        # WASI does not support threads, so tests must run sequentially
+        run: cargo test --target wasm32-wasip1 -- --test-threads 1
 
   coverage:
     name: Code Coverage
