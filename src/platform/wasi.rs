@@ -115,19 +115,28 @@ fn test_wasi() {
 fn test_wasi_nodename_env() {
     let orig = std::env::var("HOSTNAME").ok();
 
-    std::env::set_var("HOSTNAME", "my-wasi-host");
+    // SAFETY: This test runs single-threaded (--test-threads 1) so env mutation is safe.
+    unsafe {
+        std::env::set_var("HOSTNAME", "my-wasi-host");
+    }
     let info = PlatformInfo::new().unwrap();
     assert_eq!(info.nodename().to_string_lossy(), "my-wasi-host");
 
-    std::env::remove_var("HOSTNAME");
-    std::env::remove_var("COMPUTERNAME");
+    // SAFETY: This test runs single-threaded (--test-threads 1) so env mutation is safe.
+    unsafe {
+        std::env::remove_var("HOSTNAME");
+        std::env::remove_var("COMPUTERNAME");
+    }
     let info = PlatformInfo::new().unwrap();
     assert_eq!(info.nodename().to_string_lossy(), "localhost");
 
     // Restore
-    match orig {
-        Some(v) => std::env::set_var("HOSTNAME", v),
-        None => std::env::remove_var("HOSTNAME"),
+    // SAFETY: This test runs single-threaded (--test-threads 1) so env mutation is safe.
+    unsafe {
+        match orig {
+            Some(v) => std::env::set_var("HOSTNAME", v),
+            None => std::env::remove_var("HOSTNAME"),
+        }
     }
 }
 
