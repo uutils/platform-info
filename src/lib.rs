@@ -18,41 +18,9 @@
 // * note: CI documentation linting has all warnings escalated to errors (using `RUSTDOCFLAGS="--deny warnings" cargo doc`)
 #![warn(missing_docs)]
 #![warn(rustdoc::broken_intra_doc_links)]
-// #![doc = include_str!("../README.md")] // ToDO: [2023-05-28; rivy] DRY by instead including README.md as crate documentation
-/*!
-[![Crates.io](https://img.shields.io/crates/v/platform-info.svg)](https://crates.io/crates/platform-info)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/uutils/platform-info/tree/main/LICENSE)
-[![CodeCov](https://codecov.io/gh/uutils/platform-info/branch/main/graph/badge.svg)](https://codecov.io/gh/uutils/platform-info/tree/main)
-
-This crate provides the ability to retrieve information specific to your current platform via a cross-platform
-uname-type API ([`UNameAPI`]). Additional platform-specific information may be supplied within [`PlatformInfo`].
-
-# Usage
-
-This crate is available on [crate.io](https://crates.io/crates/platform-info). So, to use it in your project, just add
-the following to your project's `Cargo.toml` [dependencies](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html):
-
-```toml
-[dependencies]
-platform-info = "2"
-```
-
-# Examples
-
-```rust
-*/
-#![cfg_attr(doc, doc = include_str!("../examples/ex.rs"))]
-/*!
-```
-
-Other examples can be found in the [`examples` directory](https://github.com/uutils/platform-info/tree/main/examples)
-of this crate and in the [uutils/coreutils](https://github.com/uutils/coreutils) implementation of
-[`uname`](https://github.com/uutils/coreutils/blob/main/src/uu/uname/src/uname.rs).
-*/
-
+#![doc = include_str!("../README.md")]
 // spell-checker:ignore (API) nodename osname sysname
 // spell-checker:ignore (uutils) coreutils uutils
-
 #![warn(unused_results)] // enable warnings for unused results
 
 use std::ffi::OsStr;
