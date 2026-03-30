@@ -21,6 +21,7 @@
 #![doc = include_str!("../README.md")]
 // spell-checker:ignore (API) nodename osname sysname
 // spell-checker:ignore (uutils) coreutils uutils
+#![warn(unsafe_op_in_unsafe_fn)] // require explicit unsafe blocks inside unsafe fns
 #![warn(unused_results)] // enable warnings for unused results
 
 use std::ffi::OsStr;
