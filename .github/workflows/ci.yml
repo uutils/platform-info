@@ -67,6 +67,17 @@ jobs:
           incremental_files_only: false
           verbose: true
 
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.65.0
+      - uses: Swatinem/rust-cache@v2
+      - uses: mozilla-actions/sccache-action@v0.0.9
+      - run: cargo fetch --locked
+      - run: cargo test --all-features
+
   test:
     name: Build/Test
     runs-on: ${{ matrix.os }}
