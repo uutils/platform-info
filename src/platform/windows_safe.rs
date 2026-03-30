@@ -15,16 +15,34 @@ use std::io;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
 
-use winapi::shared::minwindef::*;
-use winapi::shared::ntdef::NTSTATUS;
-use winapi::shared::ntstatus::*;
-use winapi::um::libloaderapi::*;
-use winapi::um::processthreadsapi::GetCurrentProcess;
-use winapi::um::sysinfoapi;
-use winapi::um::sysinfoapi::*;
-use winapi::um::winbase::*;
-use winapi::um::winnt::*;
-use winapi::um::winver::*;
+use windows_sys::Win32::Foundation::{
+    FreeLibrary, BOOL, FALSE, FARPROC, HANDLE, HMODULE, NTSTATUS, STATUS_SUCCESS,
+};
+use windows_sys::Win32::Storage::FileSystem::{
+    GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW,
+};
+use windows_sys::Win32::System::LibraryLoader::{GetProcAddress, LoadLibraryW};
+use windows_sys::Win32::System::SystemInformation::{
+    GetComputerNameExW, GetNativeSystemInfo, GetSystemDirectoryW, VerSetConditionMask,
+    VerifyVersionInfoW, COMPUTER_NAME_FORMAT, OSVERSIONINFOEXW, SYSTEM_INFO,
+};
+use windows_sys::Win32::System::Threading::GetCurrentProcess;
+
+// Re-use shared type aliases from parent module
+use super::{BYTE, DWORD, UINT, WORD};
+
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+type WCHAR = u16;
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+type LPVOID = *mut std::ffi::c_void;
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+type LPCVOID = *const std::ffi::c_void;
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+type ULONGLONG = u64;
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+type DWORDLONG = u64;
+#[allow(non_camel_case_types)]
+type RTL_OSVERSIONINFOEXW = OSVERSIONINFOEXW;
 
 use super::util::{to_c_string, to_c_wstring, CWSTR};
 use super::{WinApiFileVersionInfo, WinApiSystemInfo};
@@ -68,7 +86,7 @@ impl WinApiSystemInfo {
     /// Returns `wProcessorArchitecture` extracted from the [`SYSTEM_INFO`](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) structure.
     /// <br> Refer to [`SYSTEM_INFO`](https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) for more information.
     pub fn wProcessorArchitecture(&self) -> WORD {
-        unsafe { self.0.u.s().wProcessorArchitecture }
+        unsafe { self.0.Anonymous.Anonymous.wProcessorArchitecture }
     }
 }
 
@@ -253,7 +271,7 @@ pub fn WinAPI_GetProcAddress<P: AsRef<PathStr>>(
     // pub unsafe fn GetProcAddress(hModule: HMODULE, lpProcName: LPCSTR) -> FARPROC
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress> @@ <https://archive.is/ZPVMr>
     let symbol_name_cs = to_c_string(symbol_name.as_ref());
-    unsafe { GetProcAddress(module, symbol_name_cs.as_ptr()) }
+    unsafe { GetProcAddress(module, symbol_name_cs.as_ptr().cast()) }
 }
 
 // WinAPI_GetSystemDirectoryW
@@ -412,7 +430,7 @@ pub fn WinAPI_VerSetConditionMask(
     // type_mask ~ mask indicating the member of version info whose comparison operator is being set
     // condition ~ comparison type
     // * returns ULONGLONG ~ updated condition_mask
-    unsafe { sysinfoapi::VerSetConditionMask(condition_mask, type_mask, condition) }
+    unsafe { VerSetConditionMask(condition_mask, type_mask, condition) }
 }
 
 // WinOsFileVersionInfoQuery_root
@@ -474,16 +492,17 @@ pub fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, WinOSError> {
     let module_path = super::WinOsGetSystemDirectory()?.join(module_file);
     // let func = super::WinOsGetModuleProcAddress(module_path, procedure); // loads module "permanently" (for the life of current process)
     let module = WinAPI_LoadLibrary(module_path);
-    let func = WinAPI_GetProcAddress(module, symbol_name);
-    if func.is_null() {
-        return Err(Box::from(format!(
-            "Unable to find DLL procedure '{}' within '{}'",
-            symbol_name, module_file
-        )));
-    }
+    let func = match WinAPI_GetProcAddress(module, symbol_name) {
+        Some(f) => f,
+        None => {
+            return Err(Box::from(format!(
+                "Unable to find DLL procedure '{}' within '{}'",
+                symbol_name, module_file
+            )));
+        }
+    };
 
-    let func: extern "system" fn(HANDLE, *mut BOOL) -> BOOL =
-        unsafe { mem::transmute(func as *const ()) };
+    let func: extern "system" fn(HANDLE, *mut BOOL) -> BOOL = unsafe { mem::transmute(func) };
 
     let mut is_wow64: BOOL = FALSE;
     let result: BOOL = func(process, &mut is_wow64);
@@ -509,15 +528,17 @@ pub fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, WinOSError> {
     let module_path = super::WinOsGetSystemDirectory()?.join(module_file);
     // let func = super::WinOsGetModuleProcAddress(module_path, procedure); // loads module "permanently" (for the life of current process)
     let module = WinAPI_LoadLibrary(module_path);
-    let func = WinAPI_GetProcAddress(module, symbol_name);
-    if func.is_null() {
-        return Err(Box::from(format!(
-            "Unable to find DLL procedure '{}' within '{}'",
-            symbol_name, module_file
-        )));
-    }
+    let func = match WinAPI_GetProcAddress(module, symbol_name) {
+        Some(f) => f,
+        None => {
+            return Err(Box::from(format!(
+                "Unable to find DLL procedure '{}' within '{}'",
+                symbol_name, module_file
+            )));
+        }
+    };
     let func: extern "system" fn(*mut RTL_OSVERSIONINFOEXW) -> NTSTATUS =
-        unsafe { mem::transmute(func as *const ()) };
+        unsafe { mem::transmute(func) };
 
     let mut os_version_info = match create_OSVERSIONINFOEXW() {
         Ok(value) => value,
