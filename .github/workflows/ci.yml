@@ -104,7 +104,7 @@ jobs:
           echo "PWD='${PWD}'"
           # tooling info display
           echo "## tooling"
-          (gcc --version | head -1) || :
+          command -v gcc >/dev/null 2>&1 && (gcc --version | head -1) || true
           rustup -V 2>/dev/null
           rustup show active-toolchain
           cargo -V

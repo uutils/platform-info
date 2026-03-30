@@ -37,9 +37,36 @@ use std::fmt::{Debug, Formatter};
 use std::io;
 use std::os::windows::ffi::OsStringExt;
 
-use winapi::shared::minwindef::*;
-use winapi::um::sysinfoapi::*;
-use winapi::um::winnt::*;
+use windows_sys::Win32::Foundation::FALSE;
+use windows_sys::Win32::System::SystemInformation::{
+    ComputerNamePhysicalDnsHostname, PROCESSOR_ARCHITECTURE_ALPHA, PROCESSOR_ARCHITECTURE_ALPHA64,
+    PROCESSOR_ARCHITECTURE_AMD64, PROCESSOR_ARCHITECTURE_ARM, PROCESSOR_ARCHITECTURE_ARM64,
+    PROCESSOR_ARCHITECTURE_IA64, PROCESSOR_ARCHITECTURE_INTEL, PROCESSOR_ARCHITECTURE_MIPS,
+    PROCESSOR_ARCHITECTURE_PPC, PROCESSOR_ARCHITECTURE_SHX, SYSTEM_INFO, VER_PRODUCT_TYPE,
+    VER_SUITENAME,
+};
+
+// Windows type aliases not exported by windows-sys
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+pub(crate) type BYTE = u8;
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+pub(crate) type WORD = u16;
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+pub(crate) type DWORD = u32;
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+pub(crate) type UINT = u32;
+
+// VER_* constants defined locally with types matching their usage context.
+// windows-sys exports these as u32, but wProductType is u8 and VerSetConditionMask condition is u8.
+const VER_EQUAL: BYTE = 1;
+const VER_NT_WORKSTATION: BYTE = 1;
+const VER_SUITE_WH_SERVER: DWORD = 32768;
+#[cfg(test)]
+const VER_NT_SERVER: BYTE = 3;
+#[cfg(test)]
+const VER_SUITE_PERSONAL: DWORD = 0x00000200;
+#[cfg(test)]
+const VER_SUITE_SMALLBUSINESS: DWORD = 0x00000001;
 
 use crate::{PlatformInfoAPI, PlatformInfoError, UNameAPI};
 
@@ -166,8 +193,9 @@ pub mod util {
     use std::ffi::OsStr;
     use std::os::windows::ffi::OsStrExt;
 
-    use winapi::um::winnt::*;
-
+    /// WinOS wide character (`wchar_t` / `u16`)
+    #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
+    pub type WCHAR = u16;
     /// WinOS wide-character string buffer
     /// <br>Note: `WCHAR` (aka `TCHAR`) == `wchar_t` == `u16`
     #[allow(clippy::upper_case_acronyms)]
@@ -427,10 +455,10 @@ fn mmbr_from_file_version(
 ) -> Result<MmbrVersion, WinOSError> {
     let info = WinOsFileVersionInfoQuery_root(&file_version_info)?;
     Ok(MmbrVersion {
-        major: DWORD::from(HIWORD(info.dwProductVersionMS)),
-        minor: DWORD::from(LOWORD(info.dwProductVersionMS)),
-        build: DWORD::from(HIWORD(info.dwProductVersionLS)),
-        release: DWORD::from(LOWORD(info.dwProductVersionLS)),
+        major: info.dwProductVersionMS >> 16,
+        minor: info.dwProductVersionMS & 0xffff,
+        build: info.dwProductVersionLS >> 16,
+        release: info.dwProductVersionLS & 0xffff,
     })
 }
 
