@@ -97,6 +97,12 @@ const HOST_OS_NAME: &str = if cfg!(all(
     "illumos"
 } else if cfg!(target_os = "solaris") {
     "Solaris"
+} else if cfg!(target_os = "haiku") {
+    "Haiku"
+} else if cfg!(target_os = "dragonfly") {
+    "DragonFly"
+} else if cfg!(target_os = "aix") {
+    "AIX"
 } else if cfg!(target_os = "cygwin") {
     "Cygwin"
 } else if cfg!(target_os = "wasi") {
