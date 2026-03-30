@@ -99,19 +99,24 @@ const HOST_OS_NAME: &str = if cfg!(all(
     "solaris"
 } else if cfg!(target_os = "cygwin") {
     "Cygwin"
+} else if cfg!(target_os = "wasi") {
+    "WASI"
 } else {
     "unknown"
 };
 
 //=== platform-specific module code
 
-#[cfg(unix)]
+#[cfg(all(unix, not(target_os = "wasi")))]
 #[path = "platform/unix.rs"]
 mod target;
 #[cfg(windows)]
 #[path = "platform/windows.rs"]
 mod target;
-#[cfg(not(any(unix, windows)))]
+#[cfg(target_os = "wasi")]
+#[path = "platform/wasi.rs"]
+mod target;
+#[cfg(not(any(unix, windows, target_os = "wasi")))]
 #[path = "platform/unknown.rs"]
 mod target;
 
