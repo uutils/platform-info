@@ -15,8 +15,9 @@ use std::io;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
 
+use windows_sys::core::BOOL;
 use windows_sys::Win32::Foundation::{
-    FreeLibrary, BOOL, FALSE, FARPROC, HANDLE, HMODULE, NTSTATUS, STATUS_SUCCESS,
+    FreeLibrary, FALSE, FARPROC, HANDLE, HMODULE, NTSTATUS, STATUS_SUCCESS,
 };
 use windows_sys::Win32::Storage::FileSystem::{
     GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW,
