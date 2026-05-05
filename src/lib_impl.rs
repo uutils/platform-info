@@ -150,7 +150,14 @@ fn test_map_processor_mappings() {
     assert_eq!(map_processor("i686"), "i686");
 
     // Unknown/passthrough architectures
+    assert_eq!(map_processor("riscv32"), "riscv32");
     assert_eq!(map_processor("riscv64"), "riscv64");
+    assert_eq!(map_processor("powerpc"), "powerpc");
     assert_eq!(map_processor("powerpc64"), "powerpc64");
+    assert_eq!(map_processor("powerpc64le"), "powerpc64le");
+    assert_eq!(map_processor("s390x"), "s390x");
+    assert_eq!(map_processor("sparc64"), "sparc64");
+    assert_eq!(map_processor("loongarch64"), "loongarch64");
+    assert_eq!(map_processor("mips64"), "mips64");
     assert_eq!(map_processor("unknown"), "unknown");
 }
