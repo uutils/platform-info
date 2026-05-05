@@ -48,6 +48,12 @@ pub use lib_impl::BoxedThreadSafeStdError as PlatformInfoError;
 pub trait PlatformInfoAPI: UNameAPI {
     /// Creates a new instance of [`PlatformInfo`].
     /// <br> On some platforms, it is possible for this function to fail.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`PlatformInfoError`] if the underlying OS query fails — for
+    /// example, when `uname()` returns an error on Unix or the Windows API
+    /// calls used to gather system information cannot be completed.
     fn new() -> Result<Self, PlatformInfoError>
     where
         Self: Sized;
