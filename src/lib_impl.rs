@@ -107,6 +107,8 @@ const HOST_OS_NAME: &str = if cfg!(all(
     "Cygwin"
 } else if cfg!(target_os = "wasi") {
     "WASI"
+} else if cfg!(target_os = "hurd") {
+    "GNU"
 } else {
     "unknown"
 };
