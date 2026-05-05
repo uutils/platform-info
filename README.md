@@ -13,7 +13,7 @@ A simple cross-platform way to get information about the currently running syste
 
 This simple example:
 
-```rust
+```rust,ignore
 // examples/ex.rs
 // * use `cargo run --example ex` to execute this example
 
