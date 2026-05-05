@@ -55,11 +55,10 @@ type PathString = PathBuf;
 /// ref: <https://github.com/uutils/coreutils/issues/8659>
 pub(crate) fn map_processor(machine: &str) -> String {
     match machine {
-        "arm64" => "arm".to_string(),
         "aarch64" => "aarch64".to_string(),
         "x86_64" | "amd64" => "x86_64".to_string(),
         "i386" | "i486" | "i586" | "i686" => "i686".to_string(),
-        "armv7l" | "armv6l" | "armv8l" => "arm".to_string(),
+        "arm64" | "armv6l" | "armv7l" | "armv8l" => "arm".to_string(),
         _ => machine.to_string(),
     }
 }
