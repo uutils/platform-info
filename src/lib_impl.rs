@@ -38,7 +38,7 @@ type PathString = PathBuf;
 /// While [`UNameAPI::machine()`] returns the raw architecture string from the OS (e.g., "arm64" on macOS),
 /// `processor()` provides a normalized, cross-platform compatible representation:
 ///
-/// | Platform | machine() | processor() | Reason |
+/// | Platform | `machine()` | `processor()` | Reason |
 /// |----------|-----------|-------------|--------|
 /// | macOS ARM | "arm64" | "arm" | GNU coreutils compatibility |
 /// | Linux ARM64 | "aarch64" | "aarch64" | Preserve Linux convention |

@@ -75,7 +75,7 @@ pub trait UNameAPI {
     /// The processor type (architecture) of the current system.
     ///
     /// Maps machine architecture strings to GNU coreutils-compatible processor types.
-    /// For example, "arm64" may map to "arm", "x86_64" to "x86_64", etc.
+    /// For example, "arm64" may map to "arm", `x86_64` to `x86_64`, etc.
     /// This provides more semantically meaningful processor information than the
     /// raw machine string in some contexts.
     fn processor(&self) -> &OsStr;
