@@ -64,9 +64,9 @@ const VER_SUITE_WH_SERVER: DWORD = 32768;
 #[cfg(test)]
 const VER_NT_SERVER: BYTE = 3;
 #[cfg(test)]
-const VER_SUITE_PERSONAL: DWORD = 0x00000200;
+const VER_SUITE_PERSONAL: DWORD = 0x0000_0200;
 #[cfg(test)]
-const VER_SUITE_SMALLBUSINESS: DWORD = 0x00000001;
+const VER_SUITE_SMALLBUSINESS: DWORD = 0x0000_0001;
 
 use crate::{PlatformInfoAPI, PlatformInfoError, UNameAPI};
 
@@ -76,7 +76,14 @@ use super::PathString;
 type WinOSError = crate::lib_impl::BoxedThreadSafeStdError;
 
 mod windows_safe;
-use windows_safe::*;
+use windows_safe::{
+    create_OSVERSIONINFOEXW, NTDLL_RtlGetVersion, WinAPI_GetComputerNameExW,
+    WinAPI_GetFileVersionInfoSizeW, WinAPI_GetFileVersionInfoW, WinAPI_GetNativeSystemInfo,
+    WinAPI_GetSystemDirectoryW, WinAPI_VerSetConditionMask, WinAPI_VerifyVersionInfoW,
+    WinOsFileVersionInfoQuery_root,
+};
+#[cfg(test)]
+use windows_safe::{KERNEL32_IsWow64Process, WinAPI_GetCurrentProcess};
 
 //===
 
@@ -174,7 +181,7 @@ pub struct WinApiSystemInfo(
 );
 
 // WinOsVersionInfo
-/// Contains WinOS version information as [OsString]'s; for more info, see [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT).
+/// Contains `WinOS` version information as [`OsString`]'s; for more info, see [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WinOsVersionInfo {
     // ref: [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
@@ -193,20 +200,20 @@ pub mod util {
     use std::ffi::OsStr;
     use std::os::windows::ffi::OsStrExt;
 
-    /// WinOS wide character (`wchar_t` / `u16`)
+    /// `WinOS` wide character (`wchar_t` / `u16`)
     #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
     pub type WCHAR = u16;
-    /// WinOS wide-character string buffer
+    /// `WinOS` wide-character string buffer
     /// <br>Note: `WCHAR` (aka `TCHAR`) == `wchar_t` == `u16`
     #[allow(clippy::upper_case_acronyms)]
     pub type WSTR = Vec<WCHAR>;
-    /// NUL-terminated WinOS wide-character string buffer
+    /// NUL-terminated `WinOS` wide-character string buffer
     /// <br>Note: `WCHAR` (aka `TCHAR`) == `wchar_t` == `u16`
     #[allow(clippy::upper_case_acronyms)]
     pub type CWSTR = Vec<WCHAR>;
 
     // to_c_string()
-    /// Convert the leading non-NUL content of any string (which is cheaply convertible to an OsStr) into a CString, without error.
+    /// Convert the leading non-NUL content of any string (which is cheaply convertible to an `OsStr`) into a `CString`, without error.
     ///
     /// Any non-Unicode sequences are replaced with [U+FFFD (REPLACEMENT CHARACTER)](https://en.wikipedia.org/wiki/Specials_(Unicode_block)).
     pub fn to_c_string<S: AsRef<OsStr>>(os_str: S) -> CString {
@@ -219,7 +226,7 @@ pub mod util {
         maybe_c_string.unwrap()
     }
 
-    /// Convert the leading non-NUL content of any string (which is cheaply convertible to an OsStr) into a CWSTR, without error.
+    /// Convert the leading non-NUL content of any string (which is cheaply convertible to an `OsStr`) into a CWSTR, without error.
     pub fn to_c_wstring<S: AsRef<OsStr>>(os_str: S) -> CWSTR {
         let nul: WCHAR = 0;
         let mut wstring: WSTR = os_str.as_ref().encode_wide().collect();
@@ -229,7 +236,7 @@ pub mod util {
         assert!(maybe_index_first_nul.is_some()); //* failure here == algorithmic/logic error => panic
         let index_first_nul = maybe_index_first_nul.unwrap();
         assert!(index_first_nul < wstring.len()); //* failure here == algorithmic/logic error => panic
-        CWSTR::from(&wstring[..(index_first_nul + 1)])
+        CWSTR::from(&wstring[..=index_first_nul])
     }
 }
 
@@ -312,7 +319,7 @@ impl Eq for WinApiSystemInfo {}
 //===
 
 // WinOSGetComputerName
-/// *Returns* a NetBIOS or DNS name associated with the local computer.
+/// *Returns* a `NetBIOS` or DNS name associated with the local computer.
 #[allow(non_snake_case)]
 fn WinOsGetComputerName() -> Result<OsString, WinOSError> {
     //## NameType ~ using "ComputerNameDnsHostname" vs "ComputerNamePhysicalDnsHostname"
@@ -421,24 +428,24 @@ where
     };
     let file_info = WinOsGetFileVersionInfo(file_path)?;
 
-    let v = mmbr_from_file_version(file_info)?;
+    let v = mmbr_from_file_version(&file_info)?;
 
     let mut info = create_OSVERSIONINFOEXW()?;
     info.wSuiteMask = WORD::try_from(VER_SUITE_WH_SERVER)?;
     info.wProductType = VER_NT_WORKSTATION;
 
     let mask = WinAPI_VerSetConditionMask(0, VER_SUITENAME, VER_EQUAL);
-    let suite_mask = if WinAPI_VerifyVersionInfoW(&info, VER_SUITENAME, mask) != FALSE {
-        VER_SUITE_WH_SERVER
-    } else {
+    let suite_mask = if WinAPI_VerifyVersionInfoW(&info, VER_SUITENAME, mask) == FALSE {
         0
+    } else {
+        VER_SUITE_WH_SERVER
     };
 
     let mask = WinAPI_VerSetConditionMask(0, VER_PRODUCT_TYPE, VER_EQUAL);
-    let product_type = if WinAPI_VerifyVersionInfoW(&info, VER_PRODUCT_TYPE, mask) != FALSE {
-        VER_NT_WORKSTATION
-    } else {
+    let product_type = if WinAPI_VerifyVersionInfoW(&info, VER_PRODUCT_TYPE, mask) == FALSE {
         0
+    } else {
+        VER_NT_WORKSTATION
     };
 
     Ok(WinOsVersionInfo {
@@ -451,9 +458,9 @@ where
 // mmbr_from_file_version
 /// *Returns* version (as an [`MmbrVersion`]) copied from a view (aka slice) into the supplied `file_version_info`.
 fn mmbr_from_file_version(
-    file_version_info: WinApiFileVersionInfo,
+    file_version_info: &WinApiFileVersionInfo,
 ) -> Result<MmbrVersion, WinOSError> {
-    let info = WinOsFileVersionInfoQuery_root(&file_version_info)?;
+    let info = WinOsFileVersionInfoQuery_root(file_version_info)?;
     Ok(MmbrVersion {
         major: info.dwProductVersionMS >> 16,
         minor: info.dwProductVersionMS & 0xffff,
@@ -463,7 +470,7 @@ fn mmbr_from_file_version(
 }
 
 // winos_name
-/// *Returns* "friendly" WinOS name.
+/// *Returns* "friendly" `WinOS` name.
 fn winos_name(
     major: DWORD,
     minor: DWORD,
@@ -585,7 +592,7 @@ fn test_nodename_no_trailing_NUL() {
 #[test]
 fn test_machine() {
     let is_wow64 = KERNEL32_IsWow64Process(WinAPI_GetCurrentProcess()).unwrap_or_else(|err| {
-        println!("ERR: IsWow64Process(): {:#?}", err);
+        println!("ERR: IsWow64Process(): {err:#?}");
         false
     });
 
@@ -607,7 +614,7 @@ fn test_machine() {
         //       almost certain some of these are not even valid targets for the Windows build)
         vec!["unknown"]
     };
-    println!("target={:#?}", target);
+    println!("target={target:#?}");
 
     let info = PlatformInfo::new().unwrap();
     let machine = info.machine().to_string_lossy();
@@ -628,10 +635,10 @@ fn test_osname() {
 fn test_version_vs_version() {
     let version_via_dll = os_version_info_from_dll().unwrap();
     let version_via_file = version_info_from_file::<_, &str>(None).unwrap();
-    assert!(version_via_file == version_info_from_file("").unwrap());
+    assert_eq!(version_via_file, version_info_from_file("").unwrap());
 
-    println!("version (via dll) = '{:#?}'", version_via_dll);
-    println!("version (via known file) = '{:#?}'", version_via_file);
+    println!("version (via dll) = '{version_via_dll:#?}'");
+    println!("version (via known file) = '{version_via_file:#?}'");
 
     assert_eq!(version_via_dll.os_name, version_via_file.os_name);
     assert_eq!(version_via_dll.release, version_via_file.release);
@@ -652,6 +659,7 @@ fn test_version_vs_version() {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn test_known_winos_names() {
     // ref: [NT Version Info (detailed)](https://en.wikipedia.org/wiki/Comparison_of_Microsoft_Windows_versions#Windows_NT) @@ <https://archive.is/FSkhj>
     assert_eq!(
@@ -808,7 +816,7 @@ fn test_processor() {
 #[test]
 fn structure_clone() {
     let info = PlatformInfo::new().unwrap();
-    println!("{:?}", info);
+    println!("{info:?}");
     #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let info_copy = info.clone();
     assert_eq!(info_copy, info);
@@ -819,7 +827,7 @@ fn structure_clone() {
         build: 3,
         release: 4,
     };
-    println!("{:?}", mmbr);
+    println!("{mmbr:?}");
     #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let mmbr_copy = mmbr.clone();
     assert_eq!(mmbr_copy, mmbr);
@@ -827,7 +835,7 @@ fn structure_clone() {
     let fvi = WinApiFileVersionInfo {
         data: vec![1, 2, 3, 4],
     };
-    println!("{:?}", fvi);
+    println!("{fvi:?}");
     #[allow(clippy::redundant_clone)] // ignore `clippy::redundant_clone` warning for direct testing
     let fvi_copy = fvi.clone();
     assert_eq!(fvi_copy, fvi);

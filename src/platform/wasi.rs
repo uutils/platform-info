@@ -48,7 +48,7 @@ impl PlatformInfoAPI for PlatformInfo {
     /// Create a new `PlatformInfo` for WASI.
     ///
     /// WASI does not provide a `uname()` syscall, and no WASI runtime (wasmtime,
-    /// wasmer, WasmEdge, wazero) exposes its identity or version to guest modules.
+    /// wasmer, `WasmEdge`, wazero) exposes its identity or version to guest modules.
     /// There is no standard or convention for runtime self-identification.
     ///
     /// We follow the same approach as wasi-libc's `uname()` implementation, which
@@ -143,7 +143,7 @@ fn test_wasi_nodename_env() {
 #[test]
 fn structure_clone() {
     let info = PlatformInfo::new().unwrap();
-    println!("{:?}", info);
+    println!("{info:?}");
     let info_copy = info.clone();
     assert_eq!(info_copy, info);
 }
