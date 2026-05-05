@@ -273,8 +273,8 @@ impl Debug for WinApiSystemInfo {
             .field("dwNumberOfProcessors", &self.0.dwNumberOfProcessors)
             .field("dwProcessorType", &self.0.dwProcessorType)
             .field("dwAllocationGranularity", &self.0.dwAllocationGranularity)
-            .field("wAllocationGranularity", &self.0.wProcessorLevel)
-            .field("wAllocationRevision", &self.0.wProcessorRevision)
+            .field("wProcessorLevel", &self.0.wProcessorLevel)
+            .field("wProcessorRevision", &self.0.wProcessorRevision)
             .finish()
     }
 }
