@@ -211,11 +211,11 @@ mod unix_safe {
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
         let mut uts = MaybeUninit::<libc::utsname>::uninit();
         let result = unsafe { libc::uname(uts.as_mut_ptr()) };
-        if result != -1 {
+        if result == -1 {
+            Err(io::Error::last_os_error())
+        } else {
             // SAFETY: `libc::uname()` succeeded => `uts` was initialized
             Ok(unsafe { uts.assume_init() })
-        } else {
-            Err(io::Error::last_os_error())
         }
     }
 }
