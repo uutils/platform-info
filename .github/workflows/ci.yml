@@ -69,14 +69,23 @@ jobs:
 
   msrv:
     name: MSRV
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.65.0
+      - name: Install tools
+        uses: taiki-e/install-action@v2
+        with:
+          tool: |
+            cargo-hack
+            cargo-minimal-versions
       - uses: Swatinem/rust-cache@v2
       - uses: mozilla-actions/sccache-action@v0.0.11
-      - run: cargo fetch --locked
-      - run: cargo test --all-features
+      - run: cargo minimal-versions test --workspace --feature-powerset --ignore-private
 
   test:
     name: Build/Test
