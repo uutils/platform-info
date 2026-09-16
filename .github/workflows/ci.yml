@@ -50,7 +50,7 @@ jobs:
             *.md
             docs/src/**/*.md
             src/**/*.md
-      - run: cargo clippy --all-targets -- -D warnings -W clippy::pedantic
+      - run: cargo clippy --all-targets -- -D warnings -D clippy::pedantic
       - name: Clippy (WASI)
         if: matrix.os == 'ubuntu-latest'
         run: |
