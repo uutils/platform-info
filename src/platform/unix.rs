@@ -126,11 +126,10 @@ impl Debug for UTSName {
         // The domainname field is not part of the POSIX standard but a GNU extension. Therefore
         // BSD-like platforms and solaris/illumos are missing the domainname field.
         #[cfg(not(any(
+            target_vendor = "apple",
             target_os = "aix",
             target_os = "illumos",
             target_os = "solaris",
-            target_os = "macos",
-            target_os = "ios",
             target_os = "dragonfly",
             target_os = "freebsd",
             target_os = "openbsd",
@@ -164,11 +163,10 @@ impl PartialEq for UTSName {
         // The domainname field is not part of the POSIX standard but a GNU extension. Therefore
         // BSD-like platforms and solaris/illumos are missing the domainname field.
         #[cfg(not(any(
+            target_vendor = "apple",
             target_os = "aix",
             target_os = "illumos",
             target_os = "solaris",
-            target_os = "macos",
-            target_os = "ios",
             target_os = "dragonfly",
             target_os = "freebsd",
             target_os = "openbsd",
