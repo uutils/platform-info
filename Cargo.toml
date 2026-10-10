@@ -29,3 +29,6 @@ windows-sys = { version = ">=0.60, <0.62", features = [
 
 [dev-dependencies]
 regex = "1.10.4"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }

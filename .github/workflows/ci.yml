@@ -50,12 +50,12 @@ jobs:
             *.md
             docs/src/**/*.md
             src/**/*.md
-      - run: cargo clippy --all-targets -- -D warnings -D clippy::pedantic
+      - run: cargo clippy --all-targets -- -D warnings
       - name: Clippy (WASI)
         if: matrix.os == 'ubuntu-latest'
         run: |
           rustup target add wasm32-wasip1
-          cargo clippy --target wasm32-wasip1 -- -D warnings -W clippy::pedantic
+          cargo clippy --target wasm32-wasip1 -- -D warnings
 
   style_spellcheck:
     name: Style/spellcheck
