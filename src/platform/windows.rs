@@ -264,7 +264,7 @@ pub struct WinApiFileVersionInfo {
 //===
 
 impl Debug for WinApiSystemInfo {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("WinApiSystemInfo")
             .field("wProcessorArchitecture", &self.wProcessorArchitecture())
             .field("dwPageSize", &self.0.dwPageSize)

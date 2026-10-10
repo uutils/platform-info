@@ -30,6 +30,9 @@ windows-sys = { version = ">=0.60, <0.62", features = [
 [dev-dependencies]
 regex = "1.10.4"
 
+[lints.rust]
+rust_2018_idioms = { level = "warn", priority = -1 }
+
 [lints.clippy]
 cargo = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
