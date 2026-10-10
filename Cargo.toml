@@ -32,6 +32,7 @@ regex = "1.10.4"
 
 [lints.rust]
 rust_2018_idioms = { level = "warn", priority = -1 }
+unsafe_op_in_unsafe_fn = "warn"
 
 [lints.clippy]
 cargo = { level = "warn", priority = -1 }
