@@ -204,7 +204,7 @@ mod unix_safe {
 
     // utsname()
     /// *Returns* a `libc::utsname` structure containing `uname`-like OS system information.
-    pub fn utsname() -> Result<libc::utsname, std::io::Error> {
+    pub fn utsname() -> Result<libc::utsname, io::Error> {
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/fn.uname.html>
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
         let mut uts = MaybeUninit::<libc::utsname>::uninit();
