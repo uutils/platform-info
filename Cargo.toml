@@ -39,3 +39,4 @@ unreachable_pub = "warn"
 [lints.clippy]
 cargo = { level = "warn", priority = -1 }
 pedantic = { level = "warn", priority = -1 }
+undocumented_unsafe_blocks = "warn"

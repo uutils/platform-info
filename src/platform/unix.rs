@@ -198,6 +198,7 @@ mod unix_safe {
         assert!(slice.len() < usize::try_from(isize::MAX).unwrap());
         assert!(slice.iter().position(|&c| c == 0 /* NUL */).unwrap() < slice.len());
         OsString::from(OsStr::from_bytes(
+            // SAFETY: the asserts above guarantee that `slice` contains a NUL terminator within its bounds
             unsafe { CStr::from_ptr(slice.as_ptr()) }.to_bytes(),
         ))
     }
@@ -208,6 +209,7 @@ mod unix_safe {
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/fn.uname.html>
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
         let mut uts = MaybeUninit::<libc::utsname>::uninit();
+        // SAFETY: `uts.as_mut_ptr()` is valid for writes of a `libc::utsname`
         let result = unsafe { libc::uname(uts.as_mut_ptr()) };
         if result == -1 {
             Err(io::Error::last_os_error())

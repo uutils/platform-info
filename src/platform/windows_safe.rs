@@ -88,6 +88,8 @@ impl WinApiSystemInfo {
     /// <br> Refer to [`SYSTEM_INFO`](https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) for more information.
     #[must_use]
     pub fn wProcessorArchitecture(&self) -> WORD {
+        // SAFETY: both union variants are plain integer data with no invalid bit patterns, and `SYSTEM_INFO` comes from
+        // `GetNativeSystemInfo()`, which fills in the `wProcessorArchitecture` variant
         unsafe { self.0.Anonymous.Anonymous.wProcessorArchitecture }
     }
 }
@@ -99,6 +101,7 @@ impl WinApiSystemInfo {
 pub(super) fn create_OSVERSIONINFOEXW(
 ) -> Result<OSVERSIONINFOEXW, crate::lib_impl::BoxedThreadSafeStdError> {
     let os_info_size = DWORD::try_from(size_of::<OSVERSIONINFOEXW>())?;
+    // SAFETY: `OSVERSIONINFOEXW` is a plain-data C struct (integers and arrays of integers); all-zero is a valid value
     let mut os_info: OSVERSIONINFOEXW = unsafe { mem::zeroed() };
     os_info.dwOSVersionInfoSize = os_info_size;
     Ok(os_info)
@@ -120,6 +123,7 @@ pub(super) fn WinAPI_FreeLibrary(module: HMODULE /* from `hModule: HMODULE` */) 
     // pub unsafe fn FreeLibrary(hLibModule: HMODULE) -> BOOL
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-freelibrary> @@ <https://archive.is/jWCsU>
     // * *returns* BOOL ~ `FALSE` (aka zero) for fn *failure*; o/w non-`FALSE` (aka non-zero) for fn *success*
+    // SAFETY: `FreeLibrary()` validates the handle and returns `FALSE` for an invalid one; no memory is accessed via Rust
     unsafe { FreeLibrary(module) }
 }
 
@@ -168,6 +172,8 @@ where
         None => (ptr::null_mut(), 0),
     };
     *size = length;
+    // SAFETY: `buffer_ptr` is either null with `*size == 0` or points to a live `Vec<WCHAR>` of `*size` elements, so
+    // the API cannot write out of bounds; `size` is a valid `&mut DWORD`
     let result = unsafe { GetComputerNameExW(name_type, buffer_ptr, size) };
     assert!((result == FALSE) || (*size <= length)); // safety sanity check; panics on out-of-bounds memory writes (buffer overrun)
     result
@@ -183,6 +189,7 @@ pub(super) fn WinAPI_GetCurrentProcess() -> HANDLE {
     // GetCurrentProcess
     // pub unsafe fn GetCurrentProcess() -> HANDLE
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess> @@ <https://archive.is/AmB3f>
+    // SAFETY: `GetCurrentProcess()` takes no arguments and only returns a constant pseudo handle
     unsafe { GetCurrentProcess() }
 }
 
@@ -203,6 +210,7 @@ pub(super) fn WinAPI_GetFileVersionInfoSizeW<P: AsRef<PathStr>>(
     // * returns DWORD ~ on *failure*, 0
     // * returns DWORD ~ on *success*, size of the file version information, in *bytes*
     let file_path_cws: CWSTR = to_c_wstring(file_path.as_ref());
+    // SAFETY: `file_path_cws` is a NUL-terminated wide string that outlives the call; a null `lpdwHandle` is allowed
     unsafe {
         GetFileVersionInfoSizeW(file_path_cws.as_ptr(), ptr::null_mut() /* ignored */)
     }
@@ -228,6 +236,8 @@ pub(super) fn WinAPI_GetFileVersionInfoW<P: AsRef<PathStr>>(
     // * length/dwLen == maximum size (in bytes) of buffer at data_ptr/lpData
     // * *returns* BOOL ~ `FALSE` (aka zero) for fn *failure*, o/w non-`FALSE` (aka non-zero) for fn *success*
     let file_path_cws: CWSTR = to_c_wstring(file_path.as_ref());
+    // SAFETY: `file_path_cws` is a NUL-terminated wide string that outlives the call; `data` owns an allocation of
+    // `data.capacity()` bytes, which is the maximum length passed to the API, so it cannot write out of bounds
     unsafe {
         GetFileVersionInfoW(
             file_path_cws.as_ptr(),
@@ -253,9 +263,10 @@ pub(super) fn WinAPI_GetNativeSystemInfo() -> SYSTEM_INFO {
     // pub unsafe fn GetNativeSystemInfo(lpSystemInfo: LPSYSTEM_INFO)
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getnativesysteminfo> @@ <https://archive.is/UV2S2>
     let mut sysinfo = MaybeUninit::<SYSTEM_INFO>::uninit();
+    // SAFETY: `sysinfo.as_mut_ptr()` is valid for writes of a `SYSTEM_INFO`, and `GetNativeSystemInfo()` always
+    // succeeds => `sysinfo` was initialized before `assume_init()`
     unsafe {
         GetNativeSystemInfo(sysinfo.as_mut_ptr());
-        // SAFETY: `GetNativeSystemInfo()` always succeeds => `sysinfo` was initialized
         sysinfo.assume_init()
     }
 }
@@ -273,6 +284,8 @@ pub(super) fn WinAPI_GetProcAddress<P: AsRef<PathStr>>(
     // pub unsafe fn GetProcAddress(hModule: HMODULE, lpProcName: LPCSTR) -> FARPROC
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-getprocaddress> @@ <https://archive.is/ZPVMr>
     let symbol_name_cs = to_c_string(symbol_name.as_ref());
+    // SAFETY: `symbol_name_cs` is a NUL-terminated C string that outlives the call; an invalid `module` makes
+    // `GetProcAddress()` return `None`
     unsafe { GetProcAddress(module, symbol_name_cs.as_ptr().cast()) }
 }
 
@@ -316,6 +329,8 @@ where
         Some(buf) => (buf.as_mut_ptr(), UINT::try_from(buf.len()).unwrap_or(0)),
         None => (ptr::null_mut(), 0),
     };
+    // SAFETY: `buffer_ptr` is either null with `length == 0` or points to a live `Vec<WCHAR>` of `length` elements, so
+    // the API cannot write out of bounds
     unsafe { GetSystemDirectoryW(buffer_ptr, length) }
 }
 
@@ -342,6 +357,7 @@ pub(super) fn WinAPI_LoadLibrary<P: AsRef<PathStr>>(
     // pub unsafe fn LoadLibraryW(lpFileName: LPCWSTR) -> HMODULE
     // ref: <https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibraryw> @@ <https://archive.is/N3Fxf>
     let module_name_cws: CWSTR = to_c_wstring(module_name.as_ref());
+    // SAFETY: `module_name_cws` is a NUL-terminated wide string that outlives the call
     unsafe { LoadLibraryW(module_name_cws.as_ptr()) }
 }
 
@@ -366,6 +382,8 @@ pub(super) fn WinAPI_VerifyVersionInfoW(
     // condition_mask ~ type of comparison for each version_info member to be compared
     // * returns BOOL ~ `FALSE` (aka zero) for non-existent resource or invalid requirements; o/w non-`FALSE` (aka non-zero)
     let version_info_ptr: *const OSVERSIONINFOEXW = version_info;
+    // SAFETY: `version_info_ptr` comes from a valid reference; `VerifyVersionInfoW()` only reads through it despite its
+    // `*mut` signature
     unsafe {
         VerifyVersionInfoW(
             version_info_ptr.cast_mut(), // version_info_ptr *is* `*const OSVERSIONINFOEXW` but misdefined by function declaration
@@ -397,6 +415,8 @@ pub(super) fn WinAPI_VerQueryValueW<'a, S: AsRef<str>>(
     // info_view_length/puLen ~ pointer to size (in characters [TCHARs/WCHARs] for "version info values", in bytes for translation array or root block)
     // * returns BOOL ~ `FALSE` (aka zero) for invalid/non-existent resource; o/w non-`FALSE` (aka non-zero)
     let version_info_ptr = version_info.as_ptr() as LPCVOID;
+    // SAFETY: `version_info_ptr` points to a live version-information block; the temporary query wide string lives
+    // until the end of the statement; `info_view` and `info_view_length` are valid `&mut` references
     unsafe {
         VerQueryValueW(
             version_info_ptr,
@@ -432,6 +452,7 @@ pub(super) fn WinAPI_VerSetConditionMask(
     // type_mask ~ mask indicating the member of version info whose comparison operator is being set
     // condition ~ comparison type
     // * returns ULONGLONG ~ updated condition_mask
+    // SAFETY: `VerSetConditionMask()` only computes a value from its integer arguments
     unsafe { VerSetConditionMask(condition_mask, type_mask, condition) }
 }
 
@@ -475,7 +496,9 @@ pub(super) fn WinOsFileVersionInfoQuery_root(
     assert!(version_info_data.len() >= usize::try_from(data_view_size)?);
     assert_eq!(data_view_size, fixed_file_info_size);
     assert!(!data_view.is_null());
-    // * lifetime of block/info is the same as input argument version_info
+    // SAFETY: `data_view` is non-null and points to `size_of::<VS_FIXEDFILEINFO>()` bytes inside `version_info_data`
+    // (checked above); the root block is DWORD-aligned by the API; the returned reference borrows `version_info`, so
+    // the block outlives it
     Ok(unsafe { &*(data_view as *const VS_FIXEDFILEINFO) })
 }
 
@@ -500,6 +523,7 @@ pub(super) fn KERNEL32_IsWow64Process(process: HANDLE) -> Result<bool, WinOSErro
         )));
     };
 
+    // SAFETY: `kernel32.dll/IsWow64Process` has this exact signature
     let func: extern "system" fn(HANDLE, *mut BOOL) -> BOOL = unsafe { mem::transmute(func) };
 
     let mut is_wow64: BOOL = FALSE;
@@ -531,6 +555,7 @@ pub(super) fn NTDLL_RtlGetVersion() -> Result<OSVERSIONINFOEXW, WinOSError> {
             "Unable to find DLL procedure '{symbol_name}' within '{module_file}'"
         )));
     };
+    // SAFETY: `ntdll.dll/RtlGetVersion` has this exact signature
     let func: extern "system" fn(*mut RTL_OSVERSIONINFOEXW) -> NTSTATUS =
         unsafe { mem::transmute(func) };
 
