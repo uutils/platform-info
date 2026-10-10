@@ -194,7 +194,7 @@ mod unix_safe {
 
     // oss_from_str()
     /// *Returns* an `OsString` created from a `libc::c_char` slice.
-    pub fn oss_from_cstr(slice: &[libc::c_char]) -> OsString {
+    pub(super) fn oss_from_cstr(slice: &[libc::c_char]) -> OsString {
         assert!(slice.len() < usize::try_from(isize::MAX).unwrap());
         assert!(slice.iter().position(|&c| c == 0 /* NUL */).unwrap() < slice.len());
         OsString::from(OsStr::from_bytes(
@@ -204,7 +204,7 @@ mod unix_safe {
 
     // utsname()
     /// *Returns* a `libc::utsname` structure containing `uname`-like OS system information.
-    pub fn utsname() -> Result<libc::utsname, io::Error> {
+    pub(super) fn utsname() -> Result<libc::utsname, io::Error> {
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/fn.uname.html>
         // ref: <https://docs.rs/libc/latest/i686-unknown-linux-gnu/libc/struct.utsname.html>
         let mut uts = MaybeUninit::<libc::utsname>::uninit();
