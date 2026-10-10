@@ -115,7 +115,7 @@ impl UNameAPI for PlatformInfo {
 pub struct UTSName(libc::utsname);
 
 impl Debug for UTSName {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut debug_struct = &mut f.debug_struct("UTSName");
         debug_struct = debug_struct
             .field("sysname", &oss_from_cstr(&self.0.sysname))
