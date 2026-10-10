@@ -12,7 +12,7 @@
 
 use std::convert::TryFrom;
 use std::io;
-use std::mem::{self, MaybeUninit};
+use std::mem::{self, size_of, MaybeUninit};
 use std::ptr;
 
 use windows_sys::core::BOOL;
@@ -98,7 +98,7 @@ impl WinApiSystemInfo {
 #[allow(non_snake_case)]
 pub fn create_OSVERSIONINFOEXW(
 ) -> Result<OSVERSIONINFOEXW, crate::lib_impl::BoxedThreadSafeStdError> {
-    let os_info_size = DWORD::try_from(mem::size_of::<OSVERSIONINFOEXW>())?;
+    let os_info_size = DWORD::try_from(size_of::<OSVERSIONINFOEXW>())?;
     let mut os_info: OSVERSIONINFOEXW = unsafe { mem::zeroed() };
     os_info.dwOSVersionInfoSize = os_info_size;
     Ok(os_info)
@@ -460,7 +460,7 @@ pub fn WinOsFileVersionInfoQuery_root(
     let mut data_view_size = 0;
 
     let query = "\\"; // "root" query ~ requests the VS_FIXEDFILEINFO structure from within the supplied `version_info`
-    let fixed_file_info_size = UINT::try_from(mem::size_of::<VS_FIXEDFILEINFO>())?; // expected returned data_view_size
+    let fixed_file_info_size = UINT::try_from(size_of::<VS_FIXEDFILEINFO>())?; // expected returned data_view_size
     if WinAPI_VerQueryValueW(
         version_info_data,
         query,
