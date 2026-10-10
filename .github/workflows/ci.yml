@@ -138,9 +138,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: mozilla-actions/sccache-action@v0.0.11
       - name: Install wasmtime
-        run: |
-          curl https://wasmtime.dev/install.sh -sSf | bash
-          echo "$HOME/.wasmtime/bin" >> $GITHUB_PATH
+        uses: bytecodealliance/actions/wasmtime/setup@v1
       - name: Build for WASI
         run: cargo build --target wasm32-wasip1
       - name: Test with wasmtime
