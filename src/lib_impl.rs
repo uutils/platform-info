@@ -11,10 +11,8 @@ use std::path::PathBuf;
 
 //=== types
 
-/// Standard thread-safe error type
-pub type ThreadSafeStdError = dyn std::error::Error + Send + Sync;
 /// Standard thread-safe error type (boxed to allow translation for any `std::error::Error` type)
-pub type BoxedThreadSafeStdError = Box<ThreadSafeStdError>;
+pub type BoxedThreadSafeStdError = Box<dyn std::error::Error + Send + Sync>;
 
 /// A slice of a path string
 /// (akin to [`str`]; aka/equivalent to [`Path`]).

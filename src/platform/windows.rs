@@ -195,28 +195,28 @@ pub struct WinOsVersionInfo {
 
 //===
 
-pub mod util {
+pub(crate) mod util {
     use std::ffi::CString;
     use std::ffi::OsStr;
     use std::os::windows::ffi::OsStrExt;
 
     /// `WinOS` wide character (`wchar_t` / `u16`)
     #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
-    pub type WCHAR = u16;
+    pub(crate) type WCHAR = u16;
     /// `WinOS` wide-character string buffer
     /// <br>Note: `WCHAR` (aka `TCHAR`) == `wchar_t` == `u16`
     #[allow(clippy::upper_case_acronyms)]
-    pub type WSTR = Vec<WCHAR>;
+    pub(crate) type WSTR = Vec<WCHAR>;
     /// NUL-terminated `WinOS` wide-character string buffer
     /// <br>Note: `WCHAR` (aka `TCHAR`) == `wchar_t` == `u16`
     #[allow(clippy::upper_case_acronyms)]
-    pub type CWSTR = Vec<WCHAR>;
+    pub(crate) type CWSTR = Vec<WCHAR>;
 
     // to_c_string()
     /// Convert the leading non-NUL content of any string (which is cheaply convertible to an `OsStr`) into a `CString`, without error.
     ///
     /// Any non-Unicode sequences are replaced with [U+FFFD (REPLACEMENT CHARACTER)](https://en.wikipedia.org/wiki/Specials_(Unicode_block)).
-    pub fn to_c_string<S: AsRef<OsStr>>(os_str: S) -> CString {
+    pub(crate) fn to_c_string<S: AsRef<OsStr>>(os_str: S) -> CString {
         let nul = '\0';
         let s = os_str.as_ref().to_string_lossy();
         let leading_s = s.split(nul).next().unwrap_or(""); // string slice of leading non-NUL characters
@@ -227,7 +227,7 @@ pub mod util {
     }
 
     /// Convert the leading non-NUL content of any string (which is cheaply convertible to an `OsStr`) into a CWSTR, without error.
-    pub fn to_c_wstring<S: AsRef<OsStr>>(os_str: S) -> CWSTR {
+    pub(crate) fn to_c_wstring<S: AsRef<OsStr>>(os_str: S) -> CWSTR {
         let nul: WCHAR = 0;
         let mut wstring: WSTR = os_str.as_ref().encode_wide().collect();
         wstring.push(nul);
@@ -257,7 +257,7 @@ struct MmbrVersion {
 ///
 /// Wraps [VS_VERSIONINFO](https://learn.microsoft.com/en-us/windows/win32/menurc/vs-versioninfo).
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct WinApiFileVersionInfo {
+pub(crate) struct WinApiFileVersionInfo {
     data: Vec<BYTE>,
 }
 
